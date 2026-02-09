@@ -51,3 +51,5 @@ export const env = {
   ...parsedEnv.data,
   ALLOWED_ORIGINS: parsedEnv.data.ALLOWED_ORIGINS.split(","),
 };
+
+export const BASE_URL = env.BASE_URL || `http://localhost:${env.PORT || 5000}`;
