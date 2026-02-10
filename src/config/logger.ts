@@ -69,3 +69,4 @@ export const logger = winston.createLogger({
 export const httpLogger = logger.child({ service: "HTTP" });
 export const dbLogger = logger.child({ service: "DB" });
 export const authLogger = logger.child({ service: "AUTH" });
+export const errorLogger = logger.child({ service: "ERROR" });

@@ -1,7 +1,8 @@
 import express, { NextFunction, Request, Response } from "express";
 import { httpLogger } from "./config/logger";
+import { errorHandler } from "./middlewares/error.middleware";
 import { requestLogger } from "./middlewares/request-logger.middleware";
-import { securityMiddleware } from "./middlewares/security.middleware";
+import { securityMiddleware } from "./middlewares/security";
 
 const app = express();
 
@@ -19,5 +20,7 @@ app.get("/", (_req, res) => {
   httpLogger.info("GET / endpoint hit");
   res.send("API running...");
 });
+
+app.use(errorHandler);
 
 export default app;
