@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 import { env } from "./env";
-import { logger } from "./logger";
+import { dbLogger } from "./logger";
 
 let isConnected = false;
 let listenersAttached = false;
 
 const connectDB = async () => {
   if (isConnected) {
-    logger.warn("MongoDB already connected");
+    dbLogger.warn("MongoDB already connected");
     return;
   }
 
@@ -17,28 +17,28 @@ const connectDB = async () => {
       autoCreate: true,
     });
     isConnected = true;
-    logger.info(`MongoDB Connected`);
+    dbLogger.info(`MongoDB Connected`);
 
     if (!listenersAttached) {
       // Handle unexpected deconnections
       mongoose.connection.on("disconnected", () => {
         isConnected = false;
-        logger.warn("MongoDB disconnected!");
+        dbLogger.warn("MongoDB disconnected!");
       });
 
       mongoose.connection.on("reconnected", () => {
         isConnected = true;
-        logger.info("MongoDB reconnected!");
+        dbLogger.info("MongoDB reconnected!");
       });
 
       mongoose.connection.on("error", (error) => {
-        logger.error(`MongoDB error: ${error.message}`);
+        dbLogger.error(`MongoDB error: ${error.message}`);
       });
 
       listenersAttached = true;
     }
   } catch (error) {
-    logger.error(`Error: ${(error as Error).message}`);
+    dbLogger.error(`Error: ${(error as Error).message}`);
     process.exit(1);
   }
 };
@@ -46,22 +46,22 @@ const connectDB = async () => {
 //  Disconnect MongoDB
 const disconnectDB = async (): Promise<void> => {
   if (!isConnected) {
-    logger.warn("MongoDB already disconnected");
+    dbLogger.warn("MongoDB already disconnected");
     return;
   }
 
   try {
     await mongoose.connection.close(false);
     isConnected = false;
-    logger.info("MongoDB connection closed");
+    dbLogger.info("MongoDB connection closed");
   } catch (error) {
-    logger.error(`Error while closing MongoDB: ${(error as Error).message}`);
+    dbLogger.error(`Error while closing MongoDB: ${(error as Error).message}`);
   }
 };
 
 // Handle proper shutdown
 const gracefulShutdown = async (signal: string) => {
-  logger.info(`Received ${signal}. Shutting down gracefully...`);
+  dbLogger.info(`Received ${signal}. Shutting down gracefully...`);
   await disconnectDB();
   process.exit(0);
 };
