@@ -26,12 +26,10 @@ const envSchema = z.object({
       "Invalid URL format",
     ),
   MONGO_URI: z.string().nonempty("MONGO_URI is required"),
-  JWT_ACCESS_SECRET: z
-    .string()
-    .min(32, "JWT_ACCESS_SECRET must be at least 32 characters"),
-  JWT_REFRESH_SECRET: z
-    .string()
-    .min(32, "JWT_REFRESH_SECRET must be at least 32 characters"),
+  JWT_ACCESS: z.string().min(32, "JWT_ACCESS must be at least 32 characters"),
+  JWT_ACCESS_EXPIRES_IN: z.string().default("15m"), // default to 15 minutes
+  JWT_REFRESH: z.string().min(32, "JWT_REFRESH must be at least 32 characters"),
+  JWT_REFRESH_EXPIRES_IN: z.string().default("7d"), // default to 7 days
   ALLOWED_ORIGINS: z.string().nonempty(),
 });
 
@@ -47,9 +45,30 @@ if (!parsedEnv.success) {
   process.exit(1);
 }
 
-export const env = {
-  ...parsedEnv.data,
-  ALLOWED_ORIGINS: parsedEnv.data.ALLOWED_ORIGINS.split(","),
+const data = parsedEnv.data;
+
+export const serverConfig = {
+  nodeEnv: data.NODE_ENV,
+  port: parseInt(data.PORT),
+  baseUrl: data.BASE_URL || `http://localhost:${data.PORT}`,
 };
 
-export const BASE_URL = env.BASE_URL || `http://localhost:${env.PORT || 5000}`;
+export const dbConfig = {
+  mongoUri: data.MONGO_URI,
+};
+
+export const jwtConfig = {
+  access: {
+    secret: data.JWT_ACCESS,
+    expiresIn: data.JWT_ACCESS_EXPIRES_IN,
+  },
+  refresh: {
+    secret: data.JWT_REFRESH,
+    expiresIn: data.JWT_REFRESH_EXPIRES_IN,
+  },
+};
+
+// CORS config
+export const corsConfig = {
+  allowedOrigins: data.ALLOWED_ORIGINS.split(","), // array of origins
+};

@@ -1,10 +1,9 @@
 import helmet from "helmet";
-import { env } from "./env";
+import { serverConfig } from "../../config/env";
 
-// Secure headers + Avoid XSS, clickjacking, injections...
-export const helmetConfig = helmet({
+export const helmetMiddleware = helmet({
   contentSecurityPolicy:
-    env.NODE_ENV === "production" ?
+    serverConfig.nodeEnv === "production" ?
       {
         directives: {
           defaultSrc: ["'self'"],
@@ -14,6 +13,6 @@ export const helmetConfig = helmet({
           connectSrc: ["'self'"],
         },
       }
-    : false, // CSP more permissive in development
+    : false,
   crossOriginEmbedderPolicy: false,
 });

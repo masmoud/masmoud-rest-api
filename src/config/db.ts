@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import { env } from "./env";
 import { dbLogger } from "./logger";
+import { dbConfig } from "./env";
 
 let isConnected = false;
 let listenersAttached = false;
@@ -12,7 +12,7 @@ const connectDB = async () => {
   }
 
   try {
-    await mongoose.connect(env.MONGO_URI, {
+    await mongoose.connect(dbConfig.mongoUri, {
       autoIndex: true,
       autoCreate: true,
     });
