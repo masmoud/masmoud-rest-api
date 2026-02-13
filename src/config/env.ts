@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
 import { z } from "zod";
-import { logger } from "./logger";
 
 dotenv.config();
 
@@ -18,7 +17,7 @@ const envSchema = z.object({
       (port) => parseInt(port) > 0 && parseInt(port) < 65536,
       "Invalid port number",
     )
-    .default("5000"),
+    .default("3000"),
   BASE_URL: z
     .string()
     .refine(
@@ -31,6 +30,7 @@ const envSchema = z.object({
   JWT_REFRESH: z.string().min(32, "JWT_REFRESH must be at least 32 characters"),
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"), // default to 7 days
   ALLOWED_ORIGINS: z.string().nonempty(),
+  LOG_LEVEL: z.string().default("info"),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -41,7 +41,7 @@ if (!parsedEnv.success) {
     message: issue.message,
     code: issue.code,
   }));
-  logger.error("Invalid environment variables:", { issues });
+  console.error("Invalid environment variables:", { issues });
   process.exit(1);
 }
 
@@ -71,4 +71,9 @@ export const jwtConfig = {
 // CORS config
 export const corsConfig = {
   allowedOrigins: data.ALLOWED_ORIGINS.split(","), // array of origins
+};
+
+// Winston config
+export const winsConfig = {
+  logLevel: data.LOG_LEVEL,
 };

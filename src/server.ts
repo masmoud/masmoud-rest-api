@@ -1,20 +1,19 @@
 import app from "./app";
+import { logger } from "./common/utils";
 import { connectDB, gracefulShutdown } from "./config/db";
 import { serverConfig } from "./config/env";
-import { logger } from "./config/logger";
-
-const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   await connectDB();
 
-  app.listen(PORT, () => {
+  app.listen(serverConfig.port, () => {
     const URL =
       serverConfig.nodeEnv === "production" ?
         serverConfig.baseUrl
-      : `http://localhost:${serverConfig.port}`;
+      : `http://localhost:${serverConfig.port}/api`;
 
     logger.info(`Server running on ${URL}`);
+    logger.info(`API v1 running on ${URL}/v1`);
   });
 
   process.on("SIGINT", () => gracefulShutdown("SIGINT"));

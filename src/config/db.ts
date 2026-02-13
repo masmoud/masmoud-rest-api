@@ -1,6 +1,18 @@
-import mongoose from "mongoose";
-import { dbLogger } from "./logger";
+import mongoose, { ConnectOptions } from "mongoose";
+import { dbLogger } from "../common/utils/logger";
 import { dbConfig } from "./env";
+
+const clientOptions: ConnectOptions = {
+  dbName: "node-ts-express-boilerplate",
+  appName: "Boilerplate API",
+  serverApi: {
+    version: "1",
+    strict: true,
+    deprecationErrors: true,
+  },
+  autoIndex: true,
+  autoCreate: true,
+};
 
 let isConnected = false;
 let listenersAttached = false;
@@ -12,11 +24,9 @@ const connectDB = async () => {
   }
 
   try {
-    await mongoose.connect(dbConfig.mongoUri, {
-      autoIndex: true,
-      autoCreate: true,
-    });
+    await mongoose.connect(dbConfig.mongoUri, clientOptions);
     isConnected = true;
+
     dbLogger.info(`MongoDB Connected`);
 
     if (!listenersAttached) {

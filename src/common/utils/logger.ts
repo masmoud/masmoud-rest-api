@@ -1,13 +1,15 @@
 import winston from "winston";
+import { serverConfig, winsConfig } from "../../config/env";
 
 const { combine, timestamp, printf, colorize } = winston.format;
 
-// Uppercase + alignment
+// Uppercase level + alignment
 const levelFormat = winston.format((info) => {
   info.level = info.level.toUpperCase().padEnd(5);
   return info;
 });
 
+// Custom log formatter
 const logFormat = printf((info) => {
   const {
     timestamp,
@@ -29,18 +31,44 @@ const logFormat = printf((info) => {
   return `${timestamp} [${level}] [${svc}] ${message}`;
 });
 
-// Base format
+// Base format for files
 const baseFormat = combine(
   timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
   levelFormat(),
   logFormat,
 );
 
-// Main logger
-export const logger = winston.createLogger({
-  level: "info",
-  transports: [
-    // Console (colored)
+// ----- DECLARE TRANSPORTS ARRAY -----
+const transports: winston.transport[] = [];
+
+// Environment-specific transports
+if (serverConfig.nodeEnv === "production") {
+  // JSON console logs for log aggregators
+  transports.push(
+    new winston.transports.Console({
+      format: combine(timestamp(), winston.format.json()),
+    }),
+  );
+
+  // Error file
+  transports.push(
+    new winston.transports.File({
+      filename: "logs/error.log",
+      level: "error",
+      format: baseFormat,
+    }),
+  );
+
+  // Combined file
+  transports.push(
+    new winston.transports.File({
+      filename: "logs/combined.log",
+      format: baseFormat,
+    }),
+  );
+} else if (serverConfig.nodeEnv === "development") {
+  // Colored console logs for dev
+  transports.push(
     new winston.transports.Console({
       format: combine(
         timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
@@ -49,23 +77,20 @@ export const logger = winston.createLogger({
         logFormat,
       ),
     }),
+  );
+} else if (serverConfig.nodeEnv === "test") {
+  // Silent logger for tests
+  transports.push(new winston.transports.Console({ silent: true }));
+}
 
-    // Error file
-    new winston.transports.File({
-      filename: "logs/error.log",
-      level: "error",
-      format: baseFormat,
-    }),
-
-    // Combined file
-    new winston.transports.File({
-      filename: "logs/combined.log",
-      format: baseFormat,
-    }),
-  ],
+// Create Logger
+export const logger = winston.createLogger({
+  level: winsConfig.logLevel,
+  silent: serverConfig.nodeEnv === "test",
+  transports,
 });
 
-// Child loggers auto-inject service tag
+// Child Loggers per service
 export const httpLogger = logger.child({ service: "HTTP" });
 export const dbLogger = logger.child({ service: "DB" });
 export const authLogger = logger.child({ service: "AUTH" });

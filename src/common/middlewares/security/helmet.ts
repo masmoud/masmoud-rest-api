@@ -1,5 +1,5 @@
 import helmet from "helmet";
-import { serverConfig } from "../../config/env";
+import { serverConfig } from "@/config/env";
 
 export const helmetMiddleware = helmet({
   contentSecurityPolicy:

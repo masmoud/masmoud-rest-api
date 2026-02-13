@@ -1,26 +1,27 @@
-import express, { NextFunction, Request, Response } from "express";
-import { httpLogger } from "./config/logger";
-import { errorHandler } from "./middlewares/error.middleware";
-import { requestLogger } from "./middlewares/request-logger.middleware";
-import { securityMiddleware } from "./middlewares/security";
+import cookieParser from "cookie-parser";
+import express from "express";
+import * as mw from "./common/middlewares";
+import { compressionConfig } from "./config/compression";
+import { v1Routes } from "./routes";
+import apiIndexRouter from "./routes/api-index";
 
 const app = express();
 
-app.use(securityMiddleware);
 app.use(express.json());
-app.use(requestLogger);
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(compressionConfig);
 
-// Middleware de logging
-app.use((req: Request, _res: Response, next: NextFunction) => {
-  httpLogger.info(`${req.method} ${req.url}`);
-  next();
-});
+app.use(mw.requestLogger);
+app.use(mw.securityMiddleware);
 
-app.get("/", (_req, res) => {
-  httpLogger.info("GET / endpoint hit");
-  res.send("API running...");
-});
+// API version index
+app.use("/api", apiIndexRouter);
 
-app.use(errorHandler);
+// Mount versioned routes
+app.use("/api/v1", v1Routes);
+
+app.use(mw.notFound);
+app.use(mw.errorHandler);
 
 export default app;

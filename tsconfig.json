@@ -4,11 +4,21 @@
     "module": "commonjs",
     "outDir": "./dist",
     "rootDir": "./src",
+    "removeComments": true,
+
     "strict": true,
     "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+
+    "lib": ["ES2020"],
+    "typeRoots": ["./node_modules/@types", "src/common/types"]
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/common/types/**/*.d.ts"],
   "exclude": ["node_modules", "dist"]
 }
