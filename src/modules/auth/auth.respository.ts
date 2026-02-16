@@ -1,4 +1,3 @@
-import { hashToken } from "@/common/utils";
 import { UserModel } from "../user/user.model";
 import { UserDB, UserDocument } from "../user/user.types";
 
@@ -20,19 +19,15 @@ export class AuthRepository {
     return UserModel.findById(id);
   }
 
-  async addRefreshToken(userId: string, token: string): Promise<void> {
-    const hashed = hashToken(token);
-
+  async addRefreshToken(userId: string, hashedToken: string): Promise<void> {
     await UserModel.findByIdAndUpdate(userId, {
-      $push: { refreshTokens: hashed },
+      $push: { refreshTokens: hashedToken },
     });
   }
 
-  async removeRefreshToken(userId: string, token: string): Promise<void> {
-    const hashed = hashToken(token);
-
+  async removeRefreshToken(userId: string, hashedToken: string): Promise<void> {
     await UserModel.findByIdAndUpdate(userId, {
-      $pull: { refreshTokens: hashed },
+      $pull: { refreshTokens: hashedToken },
     });
   }
 
@@ -42,3 +37,5 @@ export class AuthRepository {
     });
   }
 }
+
+export const authRepo = new AuthRepository();

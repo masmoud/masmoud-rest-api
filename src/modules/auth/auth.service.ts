@@ -1,21 +1,11 @@
-// src/modules/auth/auth.service.ts
-
 import { BadRequestError, hashToken, UnauthorizedError } from "@/common/utils";
 import { UserModel } from "../user/user.model";
 import { UserRepository } from "../user/user.repository";
 import { Role, UserPublic } from "../user/user.types";
-import {
-  signAccessToken,
-  signRefreshToken,
-  verifyAccessToken,
-  verifyRefreshToken,
-} from "./auth.jwt";
+import * as jwt from "./auth.jwt";
 import { AuthRepository } from "./auth.respository";
-import {
-  AccessTokenPayload,
-  AuthResponse,
-  RefreshTokenPayload,
-} from "./auth.types";
+import * as types from "./auth.types";
+import { generateRefreshTokenPair } from "./auth.utils";
 
 export class AuthService {
   private repo = new AuthRepository();
@@ -33,13 +23,13 @@ export class AuthService {
     token: string,
     type: "access" | "refresh" = "access",
   ): Promise<UserPublic> {
-    let payload: AccessTokenPayload | RefreshTokenPayload;
+    let payload: types.AccessTokenPayload | types.RefreshTokenPayload;
 
     try {
       payload =
         type === "access" ?
-          verifyAccessToken(token)
-        : verifyRefreshToken(token);
+          jwt.verifyAccessToken(token)
+        : jwt.verifyRefreshToken(token);
 
       const userId = payload.sub;
 
@@ -56,24 +46,24 @@ export class AuthService {
     email: string,
     password: string,
     role: Role,
-  ): Promise<AuthResponse> {
+  ): Promise<types.AuthResponse> {
     const existing = await this.repo.findByEmail(email);
     if (existing) {
       throw BadRequestError("Email already in use");
     }
 
     const user = await this.repo.createUser({ email, password, role });
+    const userId = user._id.toString();
 
-    const accessToken = signAccessToken({
-      sub: user._id.toString(),
+    const accessToken = jwt.signAccessToken({
+      sub: userId,
       role: user.role,
     });
 
-    const refreshToken = signRefreshToken({
-      sub: user._id.toString(),
-    });
+    const { refreshToken, hashedRefreshToken } =
+      generateRefreshTokenPair(userId);
 
-    await this.repo.addRefreshToken(user._id.toString(), refreshToken);
+    await this.repo.addRefreshToken(userId, hashedRefreshToken);
 
     return {
       user: this.toPublicUser(user),
@@ -82,23 +72,23 @@ export class AuthService {
     };
   }
 
-  async login(email: string, password: string): Promise<AuthResponse> {
+  async login(email: string, password: string): Promise<types.AuthResponse> {
     const user = await this.repo.findByEmail(email);
     if (!user) throw UnauthorizedError("Invalid credentials");
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) throw UnauthorizedError("Invalid credentials");
 
-    const accessToken = signAccessToken({
-      sub: user._id.toString(),
+    const userId = user._id.toString();
+    const accessToken = jwt.signAccessToken({
+      sub: userId,
       role: user.role,
     });
 
-    const refreshToken = signRefreshToken({
-      sub: user._id.toString(),
-    });
+    const { refreshToken, hashedRefreshToken } =
+      generateRefreshTokenPair(userId);
 
-    await this.repo.addRefreshToken(user._id.toString(), refreshToken);
+    await this.repo.addRefreshToken(userId, hashedRefreshToken);
 
     return {
       user: this.toPublicUser(user),
@@ -108,37 +98,42 @@ export class AuthService {
   }
 
   async refresh(token: string) {
-    const payload = verifyRefreshToken(token);
+    const payload = jwt.verifyRefreshToken(token);
 
     const user = await this.repo.findById(payload.sub);
     if (!user) throw UnauthorizedError("User not found");
 
+    const userId = user._id.toString();
+
     const hashedToken = hashToken(token);
 
-    const tokenExists = user.refreshTokens.includes(token);
+    const tokenExists = user.refreshTokens.includes(hashedToken);
 
     if (!tokenExists) {
       // Reuse attack detected -> invalidate all sessions
-      await this.repo.clearRefreshTokens(user._id.toString());
+      await this.repo.clearRefreshTokens(userId);
       throw UnauthorizedError("Refresj token reuse detected");
     }
 
     // Remove old refresh token
-    await this.repo.removeRefreshToken(user._id.toString(), token);
+    await this.repo.removeRefreshToken(userId, token);
 
-    // Generate new tokens
-    const newRefreshToken = signRefreshToken({ sub: user._id.toString() });
+    // Generate new refresh token pair
+    const { refreshToken, hashedRefreshToken } =
+      generateRefreshTokenPair(userId);
 
-    const newAccessToken = signAccessToken({
-      sub: user._id.toString(),
+    // Generate new access token
+    const accessToken = jwt.signAccessToken({
+      sub: userId,
       role: user.role,
     });
 
-    await this.repo.addRefreshToken(user._id.toString(), newRefreshToken);
+    // Store new hashed refresh token
+    await this.repo.addRefreshToken(userId, hashedRefreshToken);
 
     return {
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
+      accessToken,
+      refreshToken,
     };
   }
 
