@@ -1,25 +1,15 @@
-// src/modules/auth/auth.controller.ts
-
-import { UnauthorizedError } from "@/common/utils";
-import { serverConfig } from "@/config/env";
+import * as u from "@/common/utils";
 import { NextFunction, Request, Response } from "express";
-import { AuthService } from "./auth.service";
-
-const authService = new AuthService();
+import { authService } from "./auth.service";
 
 export class AuthController {
   static async register(req: Request, res: Response, next: NextFunction) {
     try {
-      const { email, password } = req.body;
-      const result = await authService.register(email, password);
+      const { email, password, role } = req.body;
+      const result = await authService.register(email, password, role);
 
-      // Set refresh token as HTTP-only cookie
-      res.cookie("refreshToken", result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+      // Set access and refresh tokens HTTP-only cookie
+      u.setAuthCookies(res, result.accessToken, result.refreshToken);
 
       res.status(201).json({
         user: result.user,
@@ -36,12 +26,7 @@ export class AuthController {
       const result = await authService.login(email, password);
 
       // Set refresh token as HTTP-only cookie
-      res.cookie("refreshToken", result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+      u.setAuthCookies(res, result.accessToken, result.refreshToken);
 
       res.json({
         user: result.user,
@@ -55,19 +40,14 @@ export class AuthController {
   static async refresh(req: Request, res: Response, next: NextFunction) {
     try {
       const token = req.cookies.refreshToken;
-      if (!token) throw UnauthorizedError("No refresh token");
+      if (!token) throw u.UnauthorizedError("No refresh token");
 
       const tokens = await authService.refresh(token);
 
       // Rotate cookie
-      res.cookie("refreshToken", tokens.refreshToken, {
-        httpOnly: true,
-        secure: serverConfig.nodeEnv === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      u.setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
 
-      res.json({ accessToken: tokens.accessToken });
+      res.json({ message: "Token refreshed", accessToken: tokens.accessToken });
     } catch (error) {
       next(error);
     }
@@ -79,18 +59,14 @@ export class AuthController {
       const user = req.user;
 
       if (!user) {
-        throw UnauthorizedError("User not authenticated");
+        throw u.UnauthorizedError("User not authenticated");
       }
 
       if (token) {
         await authService.logout(user.id, token);
-        res.clearCookie("refreshToken", {
-          httpOnly: true,
-          secure: serverConfig.nodeEnv === "production",
-          sameSite: "strict",
-          maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
       }
+      // Clear cookies
+      u.clearAuthCookies(res);
 
       res.json({ message: "Logged out successfully" });
     } catch (error) {

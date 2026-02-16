@@ -1,6 +1,6 @@
 import jwt, { Secret, SignOptions } from "jsonwebtoken";
 import { AccessTokenPayload, RefreshTokenPayload } from "./auth.types";
-import { jwtConfig } from "@/config/env";
+import { config } from "@/config/env";
 import { UnauthorizedError } from "@/common/utils";
 
 // Helper function to sign a token
@@ -15,11 +15,11 @@ const signToken = <T extends object>(
 
 // Access Token
 const signAccessToken = (payload: AccessTokenPayload) =>
-  signToken(payload, jwtConfig.access.secret, jwtConfig.access.expiresIn);
+  signToken(payload, config.jwt.access.secret, config.jwt.access.expiresIn);
 
 // Refresh Token
 const signRefreshToken = (payload: RefreshTokenPayload) =>
-  signToken(payload, jwtConfig.refresh.secret, jwtConfig.refresh.expiresIn);
+  signToken(payload, config.jwt.refresh.secret, config.jwt.refresh.expiresIn);
 
 // Verify Token
 const verifyToken = <T>(token: string, secret: Secret): T => {
@@ -40,7 +40,7 @@ const verifyToken = <T>(token: string, secret: Secret): T => {
 const verifyAccessToken = (token: string): AccessTokenPayload => {
   const payload = verifyToken<AccessTokenPayload>(
     token,
-    jwtConfig.access.secret,
+    config.jwt.access.secret,
   );
 
   if (!payload.sub || !payload.role) {
@@ -53,7 +53,7 @@ const verifyAccessToken = (token: string): AccessTokenPayload => {
 const verifyRefreshToken = (token: string): RefreshTokenPayload => {
   const payload = verifyToken<RefreshTokenPayload>(
     token,
-    jwtConfig.refresh.secret,
+    config.jwt.refresh.secret,
   );
   if (!payload.sub) {
     throw UnauthorizedError("Invalid refresh token payload");

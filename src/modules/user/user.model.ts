@@ -1,6 +1,6 @@
+import bcrypt from "bcryptjs";
 import { Schema, model } from "mongoose";
 import { Role, UserDB, UserMethods } from "./user.types";
-import bcrypt from "bcryptjs";
 
 const userSchema = new Schema<UserDB, {}, UserMethods>(
   {
