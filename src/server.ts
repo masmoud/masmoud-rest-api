@@ -1,16 +1,18 @@
-import app from "./app";
+import { App } from "./app";
 import { logger } from "./common/utils";
 import { connectDB, gracefulShutdown } from "./config/db";
-import { serverConfig } from "./config/env";
+import { config } from "./config/env";
+
+const appInstance = new App();
 
 const startServer = async () => {
   await connectDB();
 
-  app.listen(serverConfig.port, () => {
+  appInstance.app.listen(config.server.port, () => {
     const URL =
-      serverConfig.nodeEnv === "production" ?
-        serverConfig.baseUrl
-      : `http://localhost:${serverConfig.port}/api`;
+      config.server.nodeEnv === "production" ?
+        config.server.baseUrl
+      : `http://localhost:${config.server.port}/api`;
 
     logger.info(`Server running on ${URL}`);
     logger.info(`API v1 running on ${URL}/v1`);

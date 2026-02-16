@@ -1,27 +1,32 @@
 import cookieParser from "cookie-parser";
-import express from "express";
+import express, { Application } from "express";
 import * as mw from "./common/middlewares";
 import { compressionConfig } from "./config/compression";
 import { v1Routes } from "./routes";
 import apiIndexRouter from "./routes/api-index";
 
-const app = express();
+export class App {
+  public app: Application;
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-app.use(compressionConfig);
+  constructor() {
+    this.app = express();
+    this.config();
+    this.routes();
+  }
 
-app.use(mw.requestLogger);
-app.use(mw.securityMiddleware);
+  private config(): void {
+    this.app.use(express.json());
+    this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(cookieParser());
+    this.app.use(compressionConfig);
+    this.app.use(mw.requestLogger);
+    this.app.use(mw.securityMiddleware);
+  }
 
-// API version index
-app.use("/api", apiIndexRouter);
-
-// Mount versioned routes
-app.use("/api/v1", v1Routes);
-
-app.use(mw.notFound);
-app.use(mw.errorHandler);
-
-export default app;
+  private routes() {
+    this.app.use("/api", apiIndexRouter);
+    this.app.use("/api/v1", v1Routes);
+    this.app.use(mw.notFound);
+    this.app.use(mw.errorHandler);
+  }
+}

@@ -1,6 +1,6 @@
 import { ForbiddenError } from "@/common/utils";
 import { NextFunction, Request, Response } from "express";
-import { Role } from "../user/user.types";
+import { Role } from "../../../modules/user/user.types";
 
 export const authorize =
   (...allowedRoles: Role[]) =>

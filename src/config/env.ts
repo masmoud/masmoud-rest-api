@@ -47,17 +47,17 @@ if (!parsedEnv.success) {
 
 const data = parsedEnv.data;
 
-export const serverConfig = {
+const serverConfig = {
   nodeEnv: data.NODE_ENV,
   port: parseInt(data.PORT),
   baseUrl: data.BASE_URL || `http://localhost:${data.PORT}`,
 };
 
-export const dbConfig = {
+const dbConfig = {
   mongoUri: data.MONGO_URI,
 };
 
-export const jwtConfig = {
+const jwtConfig = {
   access: {
     secret: data.JWT_ACCESS,
     expiresIn: data.JWT_ACCESS_EXPIRES_IN,
@@ -69,11 +69,25 @@ export const jwtConfig = {
 };
 
 // CORS config
-export const corsConfig = {
+const corsConfig = {
   allowedOrigins: data.ALLOWED_ORIGINS.split(","), // array of origins
 };
 
 // Winston config
-export const winsConfig = {
+const winstonConfig = {
   logLevel: data.LOG_LEVEL,
+};
+
+export const config: Readonly<{
+  server: typeof serverConfig;
+  db: typeof dbConfig;
+  jwt: typeof jwtConfig;
+  cors: typeof corsConfig;
+  logger: typeof winstonConfig;
+}> = {
+  server: serverConfig,
+  db: dbConfig,
+  jwt: jwtConfig,
+  cors: corsConfig,
+  logger: winstonConfig,
 };

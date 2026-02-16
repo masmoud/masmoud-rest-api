@@ -1,9 +1,9 @@
+import { config } from "@/config/env";
 import helmet from "helmet";
-import { serverConfig } from "@/config/env";
 
 export const helmetMiddleware = helmet({
   contentSecurityPolicy:
-    serverConfig.nodeEnv === "production" ?
+    config.server.nodeEnv === "production" ?
       {
         directives: {
           defaultSrc: ["'self'"],

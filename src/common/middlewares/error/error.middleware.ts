@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { serverConfig } from "../../../config/env";
 import { AppError } from "../../utils/errors";
 import { errorLogger } from "../../utils/logger";
+import { config } from "@/config/env";
 
 export const errorHandler = (
   err: unknown,
@@ -16,7 +16,7 @@ export const errorHandler = (
 
   errorLogger.error(error.message, {
     statusCode: error.statusCode,
-    stack: serverConfig.nodeEnv === "development" ? error.stack : undefined,
+    stack: config.server.nodeEnv === "development" ? error.stack : undefined,
   });
 
   res.status(error.statusCode).json({
@@ -25,6 +25,6 @@ export const errorHandler = (
     ...(error.details && typeof error.details === "object" ?
       { errors: error.details }
     : {}),
-    ...(serverConfig.nodeEnv === "development" && { stack: error.stack }),
+    ...(config.server.nodeEnv === "development" && { stack: error.stack }),
   });
 };

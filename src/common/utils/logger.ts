@@ -1,5 +1,5 @@
+import { config } from "@/config/env";
 import winston from "winston";
-import { serverConfig, winsConfig } from "../../config/env";
 
 const { combine, timestamp, printf, colorize } = winston.format;
 
@@ -42,7 +42,7 @@ const baseFormat = combine(
 const transports: winston.transport[] = [];
 
 // Environment-specific transports
-if (serverConfig.nodeEnv === "production") {
+if (config.server.nodeEnv === "production") {
   // JSON console logs for log aggregators
   transports.push(
     new winston.transports.Console({
@@ -66,7 +66,7 @@ if (serverConfig.nodeEnv === "production") {
       format: baseFormat,
     }),
   );
-} else if (serverConfig.nodeEnv === "development") {
+} else if (config.server.nodeEnv === "development") {
   // Colored console logs for dev
   transports.push(
     new winston.transports.Console({
@@ -78,15 +78,15 @@ if (serverConfig.nodeEnv === "production") {
       ),
     }),
   );
-} else if (serverConfig.nodeEnv === "test") {
+} else if (config.server.nodeEnv === "test") {
   // Silent logger for tests
   transports.push(new winston.transports.Console({ silent: true }));
 }
 
 // Create Logger
 export const logger = winston.createLogger({
-  level: winsConfig.logLevel,
-  silent: serverConfig.nodeEnv === "test",
+  level: config.logger.logLevel,
+  silent: config.server.nodeEnv === "test",
   transports,
 });
 

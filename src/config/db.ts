@@ -1,6 +1,6 @@
+import { dbLogger } from "@/common/utils";
 import mongoose, { ConnectOptions } from "mongoose";
-import { dbLogger } from "../common/utils/logger";
-import { dbConfig } from "./env";
+import { config } from "./env";
 
 const clientOptions: ConnectOptions = {
   dbName: "node-ts-express-boilerplate",
@@ -24,7 +24,7 @@ const connectDB = async () => {
   }
 
   try {
-    await mongoose.connect(dbConfig.mongoUri, clientOptions);
+    await mongoose.connect(config.db.mongoUri, clientOptions);
     isConnected = true;
 
     dbLogger.info(`MongoDB Connected`);
