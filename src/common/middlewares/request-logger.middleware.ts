@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { httpLogger } from "../../utils/logger";
+import { logs } from "../utils";
 
 export const requestLogger = (
   req: Request,
@@ -16,7 +16,7 @@ export const requestLogger = (
       : res.statusCode >= 400 ? "warn"
       : "info";
 
-    httpLogger.log(level, {
+    logs.http.log(level, {
       method: req.method,
       url: req.originalUrl,
       statusCode: res.statusCode,

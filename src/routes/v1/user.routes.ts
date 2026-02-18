@@ -1,25 +1,17 @@
-import { validate } from "@/common/middlewares/validators/validate";
-import { authenticate, authorize } from "@/modules/auth";
-import { UserController } from "@/modules/user/user.controller";
-import { Role } from "@/modules/user/user.types";
-import { updateUserSchema } from "@/modules/user/user.validator";
+import { authenticate, authorize, validate } from "@/common/middlewares";
+import { Role } from "@/common/types";
+import { UserController as uc, updateUserSchema } from "@/modules/user";
 import { Router } from "express";
 
 const router = Router();
 
 // Authenticated User Profile
-router.get("/profile", authenticate(), UserController.profile);
+router.get("/profile", authenticate(), uc.profile);
 
 // Users CRUD
-router
-  .get("/:id", authenticate(), UserController.getUserById)
-  .get("/", authenticate(), authorize([Role.ADMIN]), UserController.listUsers)
-  .delete("/:id", authenticate(), UserController.deleteUser)
-  .put(
-    "/:id",
-    authenticate(),
-    validate(updateUserSchema),
-    UserController.updateUser,
-  );
+router.get("/:id", authenticate(), uc.getUserById);
+router.get("/", authenticate(), authorize([Role.ADMIN]), uc.listUsers);
+router.delete("/:id", authenticate(), uc.deleteUser);
+router.put("/:id", authenticate(), validate(updateUserSchema), uc.updateUser);
 
 export default router;

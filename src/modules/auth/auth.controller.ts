@@ -1,4 +1,4 @@
-import * as u from "@/common/utils";
+import { authCookies, errors } from "@/common/utils";
 import { NextFunction, Request, Response } from "express";
 import { authService } from "./auth.service";
 
@@ -9,7 +9,7 @@ export class AuthController {
       const result = await authService.register(email, password, role);
 
       // Set access and refresh tokens HTTP-only cookie
-      u.setAuthCookies(res, result.accessToken, result.refreshToken);
+      authCookies.set(res, result.accessToken, result.refreshToken);
 
       res.status(201).json({
         user: result.user,
@@ -26,7 +26,7 @@ export class AuthController {
       const result = await authService.login(email, password);
 
       // Set refresh token as HTTP-only cookie
-      u.setAuthCookies(res, result.accessToken, result.refreshToken);
+      authCookies.set(res, result.accessToken, result.refreshToken);
 
       res.json({
         user: result.user,
@@ -40,12 +40,12 @@ export class AuthController {
   static async refresh(req: Request, res: Response, next: NextFunction) {
     try {
       const token = req.cookies.refreshToken;
-      if (!token) throw u.UnauthorizedError("No refresh token");
+      if (!token) throw errors.Unauthorized("No refresh token");
 
       const tokens = await authService.refresh(token);
 
       // Rotate cookie
-      u.setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+      authCookies.set(res, tokens.accessToken, tokens.refreshToken);
 
       res.json({ message: "Token refreshed", accessToken: tokens.accessToken });
     } catch (error) {
@@ -59,14 +59,14 @@ export class AuthController {
       const user = req.user;
 
       if (!user) {
-        throw u.UnauthorizedError("User not authenticated");
+        throw errors.Unauthorized("User not authenticated");
       }
 
       if (token) {
         await authService.logout(user.id, token);
       }
       // Clear cookies
-      u.clearAuthCookies(res);
+      authCookies.clear(res);
 
       res.json({ message: "Logged out successfully" });
     } catch (error) {

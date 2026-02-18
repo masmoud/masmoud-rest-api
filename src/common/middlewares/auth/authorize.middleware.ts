@@ -1,15 +1,15 @@
-import { ForbiddenError } from "@/common/utils";
+import { Role } from "@/common/types";
+import { errors } from "@/common/utils";
 import { NextFunction, Request, Response } from "express";
-import { Role } from "../../../modules/user/user.types";
 
 export const authorize =
   (allowedRoles: Role[]) =>
   async (req: Request, _res: Response, next: NextFunction) => {
     const user = req.user;
-    if (!user) return next(ForbiddenError("User not authenticated"));
+    if (!user) return next(errors.Forbidden("User not authenticated"));
 
     if (!allowedRoles.includes(user.role))
-      return next(ForbiddenError("Insufficient permission"));
+      return next(errors.Forbidden("Insufficient permission"));
 
     next();
   };

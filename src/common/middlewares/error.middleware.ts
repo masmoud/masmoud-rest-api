@@ -1,7 +1,7 @@
+import { config } from "@/config/env.config";
 import { NextFunction, Request, Response } from "express";
-import { AppError } from "../../utils/errors";
-import { errorLogger } from "../../utils/logger";
-import { config } from "@/config/env";
+import { logs } from "../utils";
+import { AppError } from "../utils/errors.utils";
 
 export const errorHandler = (
   err: unknown,
@@ -14,7 +14,7 @@ export const errorHandler = (
       new AppError("Internal Server Error", 500, false)
     );
 
-  errorLogger.error(error.message, {
+  logs.error.error(error.message, {
     statusCode: error.statusCode,
     stack: config.server.nodeEnv === "development" ? error.stack : undefined,
   });

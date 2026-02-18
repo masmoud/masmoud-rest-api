@@ -1,4 +1,4 @@
-import { NotFoundError, UnauthorizedError } from "@/common/utils";
+import { errors } from "@/common/utils";
 import { UserModel } from "./user.model";
 import { UserRepository } from "./user.repository";
 import { UserPublic } from "./user.types";
@@ -16,7 +16,7 @@ export class UserService {
 
   async getProfile(userId: string): Promise<UserPublic> {
     const user = await this.repo.findById(userId);
-    if (!user) throw UnauthorizedError("User not authenticated");
+    if (!user) throw errors.Unauthorized("User not authenticated");
     return this.toPublicUser(user);
   }
 
@@ -27,13 +27,13 @@ export class UserService {
 
   async getUserById(userId: string): Promise<UserPublic> {
     const user = await this.repo.findById(userId);
-    if (!user) throw NotFoundError("User not found");
+    if (!user) throw errors.NotFound("User not found");
     return this.toPublicUser(user);
   }
 
   async updateUser(userId: string, data: Partial<any>): Promise<UserPublic> {
     const user = await this.repo.update(userId, data);
-    if (!user) throw NotFoundError("User not found");
+    if (!user) throw errors.NotFound("User not found");
     return this.toPublicUser(user);
   }
 

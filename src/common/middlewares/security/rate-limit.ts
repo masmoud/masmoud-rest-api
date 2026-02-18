@@ -1,4 +1,4 @@
-import { config } from "@/config/env";
+import { config } from "@/config/env.config";
 import rateLimit from "express-rate-limit";
 
 export const globalRateLimiter = rateLimit({

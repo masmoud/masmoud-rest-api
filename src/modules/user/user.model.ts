@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { Schema, model } from "mongoose";
-import { Role, UserDB, UserMethods } from "./user.types";
+import { UserDB, UserMethods } from "./user.types";
+import { Role, RoleArray } from "@/common/types";
 
 const userSchema = new Schema<UserDB, {}, UserMethods>(
   {
@@ -18,7 +19,7 @@ const userSchema = new Schema<UserDB, {}, UserMethods>(
     },
     role: {
       type: String,
-      enum: Object.values(Role),
+      enum: RoleArray,
       default: Role.USER,
     },
     refreshTokens: {

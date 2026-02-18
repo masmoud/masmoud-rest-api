@@ -1,6 +1,6 @@
-import { NextFunction, Request, RequestHandler, Response } from "express";
+import { RequestHandler } from "express";
 import { userService } from "./user.service";
-import { NotFoundError } from "@/common/utils";
+import { errors } from "@/common/utils";
 
 export class UserController {
   static profile: RequestHandler = async (_req, res, next) => {
@@ -14,7 +14,7 @@ export class UserController {
   static getUserById: RequestHandler = async (req, res, next) => {
     try {
       const userId = req.params.id as string;
-      if (!userId) throw NotFoundError("User ID is missing");
+      if (!userId) throw errors.NotFound("User ID is missing");
 
       const user = await userService.getUserById(userId);
       res.json(user);
@@ -23,7 +23,7 @@ export class UserController {
     }
   };
 
-  static listUsers: RequestHandler = async (req, res, next) => {
+  static listUsers: RequestHandler = async (_req, res, next) => {
     try {
       const users = await userService.listUsers();
       res.json({ users });
@@ -35,7 +35,7 @@ export class UserController {
   static updateUser: RequestHandler = async (req, res, next) => {
     try {
       const userId = req.params.id as string;
-      if (!userId) throw NotFoundError("User ID is missing");
+      if (!userId) throw errors.NotFound("User ID is missing");
 
       const data = req.body;
 
@@ -51,7 +51,7 @@ export class UserController {
   static deleteUser: RequestHandler = async (req, res, next) => {
     try {
       const userId = req.params.id as string;
-      if (!userId) throw NotFoundError("User ID is missing");
+      if (!userId) throw errors.NotFound("User ID is missing");
       await userService.deleteUser(userId);
 
       res.status(200).json({

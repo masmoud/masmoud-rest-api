@@ -1,10 +1,10 @@
+import { RoleArray } from "@/common/types";
 import { z } from "zod";
-import { Role } from "../user/user.types";
 
 export const registerSchema = z.object({
   email: z.email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(Object.values(Role)).optional(),
+  role: z.enum(RoleArray).optional(),
 });
 
 export const loginSchema = z.object({

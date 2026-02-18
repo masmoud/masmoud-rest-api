@@ -1,9 +1,5 @@
+import { Role } from "@/common/types/role.types";
 import { HydratedDocument } from "mongoose";
-
-export enum Role {
-  USER = "user",
-  ADMIN = "admin",
-}
 
 export interface UserPublic {
   id: string;

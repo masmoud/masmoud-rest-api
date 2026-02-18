@@ -1,9 +1,8 @@
-import { setAuthCookies, UnauthorizedError } from "@/common/utils";
+import { jwtService, authCookies, errors } from "@/common/utils";
 import { authService } from "@/modules/auth";
 import type { NextFunction, Request, Response } from "express";
-import { verifyAccessToken } from "../../../modules/auth/auth.jwt";
-import { RequestUser } from "../../../modules/auth/auth.types";
-import { Role } from "../../../modules/user/user.types";
+import { RequestUser } from "@/modules/auth/auth.types";
+import { Role } from "@/common/types";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -28,11 +27,11 @@ export const authenticate = () => {
       }
 
       const token = cookieToken || headerToken;
-      if (!token) throw UnauthorizedError("Missing access token");
+      if (!token) throw errors.Unauthorized("Missing access token");
 
       try {
         // Verify access token
-        const payload = verifyAccessToken(token); // type AccessTokenPayload
+        const payload = jwtService.verify.access(token); // type AccessTokenPayload
 
         req.user = {
           id: payload.sub as string,
@@ -47,10 +46,10 @@ export const authenticate = () => {
         return next();
       } catch (error) {
         const refreshToken = req.cookies["refreshToken"];
-        if (!refreshToken) throw UnauthorizedError("Access token expired");
+        if (!refreshToken) throw errors.Unauthorized("Access token expired");
 
         const tokens = await authService.refresh(refreshToken);
-        setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+        authCookies.set(res, tokens.accessToken, tokens.refreshToken);
 
         const fullUser = await authService.getUserFromToken(
           tokens.accessToken,
@@ -63,7 +62,7 @@ export const authenticate = () => {
         return next();
       }
     } catch (error) {
-      return next(UnauthorizedError("Invalid or expired token"));
+      return next(errors.Unauthorized("Invalid or expired token"));
     }
   };
 };

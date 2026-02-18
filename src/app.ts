@@ -1,10 +1,13 @@
 import cookieParser from "cookie-parser";
 import express, { Application } from "express";
-import * as mw from "./common/middlewares";
-import { compressionConfig } from "./config/compression";
-import { v1Routes } from "./routes";
-import apiIndexRouter from "./routes/api-index";
-
+import {
+  errorHandler,
+  notFound,
+  requestLogger,
+  securityMiddleware,
+} from "./common/middlewares";
+import { compressionConfig } from "./config/compression.config";
+import apiIndexRouter from "./routes/api-index.routes";
 export class App {
   public app: Application;
 
@@ -19,14 +22,13 @@ export class App {
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
     this.app.use(compressionConfig);
-    this.app.use(mw.requestLogger);
-    this.app.use(mw.securityMiddleware);
+    this.app.use(requestLogger);
+    this.app.use(securityMiddleware);
   }
 
   private routes() {
     this.app.use("/api", apiIndexRouter);
-    this.app.use("/api/v1", v1Routes);
-    this.app.use(mw.notFound);
-    this.app.use(mw.errorHandler);
+    this.app.use(notFound);
+    this.app.use(errorHandler);
   }
 }

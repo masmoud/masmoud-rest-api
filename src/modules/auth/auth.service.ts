@@ -1,11 +1,13 @@
-import { BadRequestError, hashToken, UnauthorizedError } from "@/common/utils";
-import { UserModel } from "../user/user.model";
-import { UserRepository } from "../user/user.repository";
-import { Role, UserPublic } from "../user/user.types";
-import * as jwt from "./auth.jwt";
+import { UserModel, UserPublic, UserRepository } from "../user";
 import { AuthRepository } from "./auth.respository";
-import * as types from "./auth.types";
-import { generateRefreshTokenPair } from "./auth.utils";
+import { tokenService } from "./auth.utils";
+import { Role } from "@/common/types";
+import { errors, hashToken, jwtService } from "@/common/utils";
+import {
+  AccessTokenPayload,
+  AuthResponse,
+  RefreshTokenPayload,
+} from "./auth.types";
 
 export class AuthService {
   private repo = new AuthRepository();
@@ -23,22 +25,22 @@ export class AuthService {
     token: string,
     type: "access" | "refresh" = "access",
   ): Promise<UserPublic> {
-    let payload: types.AccessTokenPayload | types.RefreshTokenPayload;
+    let payload: AccessTokenPayload | RefreshTokenPayload;
 
     try {
       payload =
         type === "access" ?
-          jwt.verifyAccessToken(token)
-        : jwt.verifyRefreshToken(token);
+          jwtService.verify.access(token)
+        : jwtService.verify.refresh(token);
 
       const userId = payload.sub;
 
       const user = await this.userRepo.findById(userId);
-      if (!user) throw UnauthorizedError("User not found");
+      if (!user) throw errors.Unauthorized("User not found");
 
       return this.toPublicUser(user);
     } catch (error) {
-      throw UnauthorizedError("Invalid or expired token");
+      throw errors.Unauthorized("Invalid or expired token");
     }
   }
 
@@ -46,22 +48,22 @@ export class AuthService {
     email: string,
     password: string,
     role: Role,
-  ): Promise<types.AuthResponse> {
+  ): Promise<AuthResponse> {
     const existing = await this.repo.findByEmail(email);
     if (existing) {
-      throw BadRequestError("Email already in use");
+      throw errors.BadRequest("Email already in use");
     }
 
     const user = await this.repo.createUser({ email, password, role });
     const userId = user._id.toString();
 
-    const accessToken = jwt.signAccessToken({
+    const accessToken = tokenService.sign.access({
       sub: userId,
       role: user.role,
     });
 
     const { refreshToken, hashedRefreshToken } =
-      generateRefreshTokenPair(userId);
+      tokenService.generate.refresh(userId);
 
     await this.repo.addRefreshToken(userId, hashedRefreshToken);
 
@@ -72,21 +74,21 @@ export class AuthService {
     };
   }
 
-  async login(email: string, password: string): Promise<types.AuthResponse> {
+  async login(email: string, password: string): Promise<AuthResponse> {
     const user = await this.repo.findByEmail(email);
-    if (!user) throw UnauthorizedError("Invalid credentials");
+    if (!user) throw errors.Unauthorized("Invalid credentials");
 
     const isMatch = await user.comparePassword(password);
-    if (!isMatch) throw UnauthorizedError("Invalid credentials");
+    if (!isMatch) throw errors.Unauthorized("Invalid credentials");
 
     const userId = user._id.toString();
-    const accessToken = jwt.signAccessToken({
+    const accessToken = tokenService.sign.access({
       sub: userId,
       role: user.role,
     });
 
     const { refreshToken, hashedRefreshToken } =
-      generateRefreshTokenPair(userId);
+      tokenService.generate.refresh(userId);
 
     await this.repo.addRefreshToken(userId, hashedRefreshToken);
 
@@ -98,10 +100,10 @@ export class AuthService {
   }
 
   async refresh(token: string) {
-    const payload = jwt.verifyRefreshToken(token);
+    const payload = jwtService.verify.refresh(token);
 
     const user = await this.repo.findById(payload.sub);
-    if (!user) throw UnauthorizedError("User not found");
+    if (!user) throw errors.Unauthorized("User not found");
 
     const userId = user._id.toString();
 
@@ -112,7 +114,7 @@ export class AuthService {
     if (!tokenExists) {
       // Reuse attack detected -> invalidate all sessions
       await this.repo.clearRefreshTokens(userId);
-      throw UnauthorizedError("Refresj token reuse detected");
+      throw errors.Unauthorized("Refresj token reuse detected");
     }
 
     // Remove old refresh token
@@ -120,10 +122,10 @@ export class AuthService {
 
     // Generate new refresh token pair
     const { refreshToken, hashedRefreshToken } =
-      generateRefreshTokenPair(userId);
+      tokenService.generate.refresh(userId);
 
     // Generate new access token
-    const accessToken = jwt.signAccessToken({
+    const accessToken = tokenService.sign.access({
       sub: userId,
       role: user.role,
     });

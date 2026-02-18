@@ -1,5 +1,4 @@
-import { UserModel } from "../user/user.model";
-import { UserDB, UserDocument } from "../user/user.types";
+import { UserDB, UserDocument, UserModel } from "../user";
 
 export class AuthRepository {
   async createUser(

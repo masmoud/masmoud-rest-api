@@ -1,4 +1,4 @@
-import { config } from "@/config/env";
+import { config } from "@/config/env.config";
 import helmet from "helmet";
 
 export const helmetMiddleware = helmet({

@@ -1,17 +1,9 @@
-import { Role, UserPublic } from "../user/user.types";
+import { Role } from "@/common/types/role.types";
+import { UserPublic } from "../user";
 
 export interface AuthUser {
   id: string;
   role: Role;
-}
-
-export interface AccessTokenPayload {
-  sub: string; // user id
-  role: Role;
-}
-
-export interface RefreshTokenPayload {
-  sub: string; // user id
 }
 
 export interface RequestUser {
@@ -23,4 +15,17 @@ export interface AuthResponse {
   user: UserPublic;
   accessToken: string;
   refreshToken: string;
+}
+
+export type JwtExpiry =
+  | `${number}${"s" | "m" | "h" | "d" | "w" | "y"}`
+  | number;
+
+export interface AccessTokenPayload {
+  sub: string; // user id
+  role: Role;
+}
+
+export interface RefreshTokenPayload {
+  sub: string; // user id
 }

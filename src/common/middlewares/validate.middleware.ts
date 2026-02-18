@@ -1,4 +1,4 @@
-import { BadRequestError } from "@/common/utils";
+import { errors } from "@/common/utils";
 import { NextFunction, Request, Response } from "express";
 import { ZodType } from "zod";
 
@@ -31,7 +31,7 @@ export const validate =
         };
       });
 
-      return next(BadRequestError("Validation failed", formattedErrors));
+      return next(errors.BadRequest("Validation failed", formattedErrors));
     }
     req[target] = result.data;
     next();
