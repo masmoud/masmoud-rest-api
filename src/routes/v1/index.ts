@@ -1,12 +1,11 @@
-import { Router } from "express";
+import apiV1Routes from "./api-v1.routes";
 import authRoutes from "./auth.routes";
-import rootRoutes from "./root.routes";
+import swaggerRoutes from "./swagger.routes";
 import userRoutes from "./user.routes";
 
-const router = Router();
-
-router.use("/", rootRoutes);
-router.use("/auth", authRoutes);
-router.use("/users", userRoutes);
-
-export default router;
+export const v1Router = {
+  auth: authRoutes,
+  user: userRoutes,
+  swagger: swaggerRoutes,
+  api: apiV1Routes,
+};
