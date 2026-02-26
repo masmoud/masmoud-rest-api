@@ -10,7 +10,7 @@ export type ApiVersionInfo = {
 export type ApiOverview = {
   service: string;
   environment: string;
-  uptime: number;
+  serviceStartTime: string;
   versions: ApiVersionInfo[];
 };
 

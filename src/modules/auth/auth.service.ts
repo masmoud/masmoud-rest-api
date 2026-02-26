@@ -1,19 +1,18 @@
-import { UserModel, UserPublic, UserRepository } from "../user";
-import { AuthRepository } from "./auth.respository";
-import { tokenService } from "./auth.utils";
 import { Role } from "@/common/types";
 import { errors, hashToken, jwtService } from "@/common/utils";
-import {
-  AccessTokenPayload,
-  AuthResponse,
-  RefreshTokenPayload,
-} from "./auth.types";
+import { UserDocument, UserPublic } from "../user";
+import { userRepository } from "../user/user.repository";
+import { authRepository } from "./auth.repository";
+import { AuthResponse, TokenPayload } from "./auth.types";
+import { tokenService } from "./auth.utils";
 
 export class AuthService {
-  private repo = new AuthRepository();
-  private userRepo = new UserRepository(UserModel);
+  constructor(
+    private readonly repo = authRepository,
+    private readonly userRepo = userRepository,
+  ) {}
 
-  private toPublicUser(user: any): UserPublic {
+  private toPublicUser(user: UserDocument): UserPublic {
     return {
       id: user._id.toString(),
       email: user.email,
@@ -25,7 +24,7 @@ export class AuthService {
     token: string,
     type: "access" | "refresh" = "access",
   ): Promise<UserPublic> {
-    let payload: AccessTokenPayload | RefreshTokenPayload;
+    let payload: TokenPayload | TokenPayload;
 
     try {
       payload =
@@ -33,9 +32,7 @@ export class AuthService {
           jwtService.verify.access(token)
         : jwtService.verify.refresh(token);
 
-      const userId = payload.sub;
-
-      const user = await this.userRepo.findById(userId);
+      const user = await this.userRepo.findById(payload.sub);
       if (!user) throw errors.Unauthorized("User not found");
 
       return this.toPublicUser(user);
@@ -47,19 +44,16 @@ export class AuthService {
   async register(
     email: string,
     password: string,
-    role: Role,
+    _role: Role,
   ): Promise<AuthResponse> {
     const existing = await this.repo.findByEmail(email);
-    if (existing) {
-      throw errors.BadRequest("Email already in use");
-    }
+    if (existing) throw errors.BadRequest("Email already registered");
 
-    const user = await this.repo.createUser({ email, password, role });
+    const user = await this.repo.createUser({ email, password });
     const userId = user._id.toString();
 
     const accessToken = tokenService.sign.access({
       sub: userId,
-      role: user.role,
     });
 
     const { refreshToken, hashedRefreshToken } =
@@ -84,7 +78,6 @@ export class AuthService {
     const userId = user._id.toString();
     const accessToken = tokenService.sign.access({
       sub: userId,
-      role: user.role,
     });
 
     const { refreshToken, hashedRefreshToken } =
@@ -99,43 +92,27 @@ export class AuthService {
     };
   }
 
-  async refresh(token: string) {
-    const payload = jwtService.verify.refresh(token);
+  async refresh(refreshToken: string) {
+    if (!refreshToken) throw errors.Unauthorized("No refresh token provided");
 
-    const user = await this.repo.findById(payload.sub);
-    if (!user) throw errors.Unauthorized("User not found");
+    const hashed = hashToken(refreshToken);
+    const userDoc = await this.repo.findByRefreshToken(hashed);
 
-    const userId = user._id.toString();
+    if (!userDoc) throw errors.Unauthorized("Invalid or expired refresh token");
 
-    const hashedToken = hashToken(token);
-
-    const tokenExists = user.refreshTokens.includes(hashedToken);
-
-    if (!tokenExists) {
-      // Reuse attack detected -> invalidate all sessions
-      await this.repo.clearRefreshTokens(userId);
-      throw errors.Unauthorized("Refresj token reuse detected");
-    }
-
-    // Remove old refresh token
-    await this.repo.removeRefreshToken(userId, token);
-
-    // Generate new refresh token pair
-    const { refreshToken, hashedRefreshToken } =
+    const userId = userDoc._id.toString();
+    // Rotate tokens
+    const { refreshToken: newToken, hashedRefreshToken } =
       tokenService.generate.refresh(userId);
 
-    // Generate new access token
-    const accessToken = tokenService.sign.access({
-      sub: userId,
-      role: user.role,
-    });
-
-    // Store new hashed refresh token
+    await this.repo.removeRefreshToken(userId, hashed);
     await this.repo.addRefreshToken(userId, hashedRefreshToken);
+
+    const accessToken = tokenService.sign.access({ sub: userId });
 
     return {
       accessToken,
-      refreshToken,
+      refreshToken: newToken,
     };
   }
 

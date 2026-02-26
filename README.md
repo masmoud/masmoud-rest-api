@@ -1,117 +1,145 @@
-# Node.js TypeScript Express Boilerplate
+# Node + TypeScript + Express Boilerplate
 
 ![Node.js](https://img.shields.io/badge/Node-20.19.0-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
 ![Express](https://img.shields.io/badge/Express-4.x-lightgrey)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-Production-ready boilerplate for building scalable APIs with Node.js, Express, TypeScript, and MongoDB. Perfect for portfolio or starting new projects quickly.
+Backend API REST built with **Node.js, Express et TypeScript**, including JWT authentication, gestion des rôles et bonnes pratiques d’architecture.
+
+Ce projet a pour objectif de démontrer une structure backend propre et maintenable.
 
 ---
 
 ## Features
 
-- ✅ Node.js + TypeScript
-- ✅ Express framework
-- ✅ MongoDB with Mongoose
-- ✅ Environment validation with Zod
-- ✅ Security middleware: Helmet, CORS, Rate Limiter
-- ✅ JWT Authentication (Access + Refresh tokens)
-- ✅ Clean architecture: Controllers / Services / Repositories
-- ✅ Docker-ready setup
-- ✅ Testing setup (Jest + Supertest) [coming soon]
+- Architecture modulaire (Controller / Service / Repository)
+- Authentification JWT (access + refresh tokens)
+- Rotation des refresh tokens
+- Cookies HTTP-only
+- Validation des requêtes (Zod)
+- Gestion centralisée des erreurs
+- Logger (Winston)
+- Sécurité : Helmet, CORS, Rate limiting
+- MongoDB avec Mongoose
+- Seed automatique des comptes admin au démarrage
+- Documentation Swagger (`/api/v1/docs`)
+
+---
+
+## Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/masmoud/masmoud-rest-api.git
+cd node-ts-express-boilerplate
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure environment variables
+
+```bash
+cp .env.example .env
+```
+
+Required variables :
+
+```
+NODE_ENV=
+BASE_URL=
+PORT=
+MONGO_URI=
+JWT_ACCESS=
+JWT_ACCESS_EXPIRES_IN=
+JWT_REFRESH=
+JWT_REFRESH_EXPIRES_IN=
+ALLOWED_ORIGINS=
+ADMIN_USERS=
+LOG_LEVEL=
+```
+
+### 4. Run the development server
+
+```bash
+npm run dev
+```
+
+### 5. Access the API
+
+Base URL:
+
+```
+http://localhost:3000/api/v1
+```
+
+Swagger documentation:
+
+```
+http://localhost:3000/api/v1/docs
+```
+
+---
+
+## Scripts
+
+- `npm run dev` – start development server
+- `npm run build` – compile TypeScript
+- `npm start` – start production server
+- `npm run lint` – run ESLint
+- `npm run test` – run tests
 
 ---
 
 ## Project Structure
 
 ```
-
 src/
-├─ app.ts
-├─ server.ts
-├─ config/
-├─ controllers/
-├─ services/
-├─ repositories/
-├─ models/
+├─ common/        # middlewares, utils, validators
+├─ config/        # environment & database config
+├─ modules/
+│  ├─ auth/
+│  └─ user/
 ├─ routes/
-├─ middlewares/
-├─ utils/
-└─ tests/
-
+├─ app.ts
+└─ server.ts
 ```
 
 ---
 
-## Getting Started
+## API Endpoints
 
-1. **Clone the repo**
+Base URL: `http://localhost:3000/api/v1`
 
-```bash
-git clone git@github.com:masmoud/node-ts-express-boilerplate.git
-cd node-ts-express-boilerplate
-```
+### Auth
 
-2. **Install dependencies**
+- `POST /api/v1/auth/register` – Register a new user
+- `POST /api/v1/auth/admin/register` – Register a new admin (ADMIN only)
+- `POST /api/v1/auth/login` – Login
+- `POST /api/v1/auth/refresh` – Refresh access token
+- `POST /api/v1/auth/logout` – Logout
 
-```bash
-npm install
-```
+### User
 
-3. **Create `.env` file based on `.env.example`**
-
-```env
-PORT=5000
-NODE_ENV=development
-MONGO_URI=mongodb://localhost:27017/mydb
-JWT_ACCESS_SECRET=your_access_secret
-JWT_REFRESH_SECRET=your_refresh_secret
-ALLOWED_ORIGINS=http://localhost:3000
-```
-
-4. **Run in development mode**
-
-```bash
-npm run dev
-```
-
-API will run on [http://localhost:5000](http://localhost:5000)
+- `GET /api/v1/users/profile` – Get current user profile
+- `GET /api/v1/users/:id` – Get user by ID
+- `GET /api/v1/users` – List all users
+- `PUT /api/v1/users/:id` – Update user
+- `DELETE /api/v1/users/:id` – Delete user
 
 ---
 
-## Example API Endpoints
+## Possible Improvements
 
-| Method | Endpoint          | Description               |
-| ------ | ----------------- | ------------------------- |
-| POST   | /api/auth/login   | User login with JWT       |
-| POST   | /api/auth/refresh | Refresh access token      |
-| POST   | /api/auth/logout  | Logout and revoke refresh |
-| GET    | /api/users        | Get all users (admin)     |
-| POST   | /api/users        | Create a new user         |
-
-> ⚠️ Add more endpoints as your app grows.
-
----
-
-## Scripts
-
-- `npm run dev` → Start dev server with hot reload
-- `npm run build` → Compile TypeScript to JavaScript
-- `npm run start` → Start production server
-- `npm run test` → Run tests (Jest + Supertest)
-
----
-
-## Docker
-
-- MongoDB ready to use via Docker
-- App can be containerized with `Dockerfile` and `docker-compose.yml`
-- Example command to run everything:
-
-```bash
-docker-compose up --build
-```
+- Tests unitaires
+- RBAC avec permissions dynamiques
+- Dockerisation
+- CI/CD pipeline
 
 ---
 

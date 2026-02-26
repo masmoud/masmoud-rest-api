@@ -1,12 +1,11 @@
 import { errors } from "@/common/utils";
-import { UserModel } from "./user.model";
-import { UserRepository } from "./user.repository";
-import { UserPublic } from "./user.types";
+import { UserRepository, userRepository } from "./user.repository";
+import { UserDocument, UserPublic } from "./user.types";
 
 export class UserService {
-  private repo = new UserRepository(UserModel);
+  constructor(private readonly repo: UserRepository = userRepository) {}
 
-  private toPublicUser(user: any): UserPublic {
+  private toPublicUser(user: UserDocument): UserPublic {
     return {
       id: user._id.toString(),
       email: user.email,

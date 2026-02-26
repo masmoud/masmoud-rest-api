@@ -1,27 +1,23 @@
-import { Model } from "mongoose";
-import { UserDB, UserDocument } from "./user.types";
+import { UserModel } from "./user.model";
+import { UserDB, UserDocument, UserModelType } from "./user.types";
 
 export class UserRepository {
-  constructor(private readonly userModel: Model<UserDB>) {}
+  constructor(private readonly userModel: UserModelType = UserModel) {}
 
   async findAll(): Promise<UserDocument[]> {
-    const users = this.userModel.find();
-    return users as unknown as UserDocument[];
+    return this.userModel.find();
   }
 
   async findById(id: string): Promise<UserDocument | null> {
-    const user = this.userModel.findById(id).exec();
-    return user as unknown as UserDocument;
+    return this.userModel.findById(id).exec();
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
-    const user = this.userModel.findOne({ email }).exec();
-    return user as unknown as UserDocument;
+    return this.userModel.findOne({ email }).exec();
   }
 
   async create(data: Partial<UserDB>): Promise<UserDocument> {
-    const user = this.userModel.create(data);
-    return user as unknown as UserDocument;
+    return this.userModel.create(data);
   }
 
   async update(
@@ -35,3 +31,5 @@ export class UserRepository {
     await this.userModel.findByIdAndDelete(id);
   }
 }
+
+export const userRepository = new UserRepository();

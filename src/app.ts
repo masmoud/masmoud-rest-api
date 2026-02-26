@@ -32,3 +32,5 @@ export class App {
     this.app.use(errorHandler);
   }
 }
+
+export const appInstance = new App();

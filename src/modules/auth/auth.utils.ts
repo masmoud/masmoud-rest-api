@@ -1,44 +1,40 @@
-import { hashToken, errors } from "@/common/utils";
+import { errors, hashToken } from "@/common/utils";
+import { config } from "@/config";
 import { Request } from "express";
 import jwt, { SignOptions } from "jsonwebtoken";
-import {
-  AccessTokenPayload,
-  JwtExpiry,
-  RefreshTokenPayload,
-} from "./auth.types";
-import { config } from "@/config";
+import { JwtExpiry, TokenPayload } from "./auth.types";
 
-export const tokenService = Object.freeze({
-  // Require authenticated user in request
-  requireUser: (req: Request) => {
-    if (!req.user) throw errors.Unauthorized("User not authenticated");
-    return req.user;
-  },
-
+export const tokenService = {
   // Namespaced signing methods
-  sign: Object.freeze({
-    access: (payload: AccessTokenPayload): string => {
+  sign: {
+    access: (payload: TokenPayload): string => {
       const options: SignOptions = {
         expiresIn: config.jwt.access.expiresIn as JwtExpiry,
       };
       return jwt.sign(payload, config.jwt.access.secret, options);
     },
 
-    refresh: (payload: RefreshTokenPayload): string => {
+    refresh: (payload: TokenPayload): string => {
       const options: SignOptions = {
         expiresIn: config.jwt.refresh.expiresIn as JwtExpiry,
       };
       return jwt.sign(payload, config.jwt.refresh.secret, options);
     },
-  }),
+  } as const,
 
   // Namespaced generation helpers
-  generate: Object.freeze({
+  generate: {
     refresh: (userId: string) => {
       const refreshToken = tokenService.sign.refresh({ sub: userId });
       const hashedRefreshToken = hashToken(refreshToken);
 
       return { refreshToken, hashedRefreshToken };
     },
-  }),
-});
+  } as const,
+} as const;
+
+export type TokenServiceType = typeof tokenService;
+
+export const authUtils = {
+  token: tokenService,
+};

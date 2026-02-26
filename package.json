@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "nodemon",
     "build": "tsc && tsc-alias",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "seed:admins": "ts-node src/seeds/seed-admins.ts",
+    "test": "jest --detectOpenHandles --forceExit"
   },
   "repository": {
     "type": "git",
@@ -39,12 +41,18 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.2.2",
+    "@types/supertest": "^6.0.3",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/winston": "^2.4.4",
+    "jest": "^30.2.0",
+    "mongodb-memory-server": "^11.0.1",
     "nodemon": "^3.1.11",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0",

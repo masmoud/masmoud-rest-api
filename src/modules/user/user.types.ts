@@ -1,5 +1,6 @@
 import { Role } from "@/common/types/role.types";
-import { HydratedDocument } from "mongoose";
+import { HydratedDocument, Model } from "mongoose";
+import { UserModel } from "./user.model";
 
 export interface UserPublic {
   id: string;
@@ -18,6 +19,6 @@ export interface UserMethods {
   comparePassword(password: string): Promise<boolean>;
 }
 
-export type UserDocument = HydratedDocument<UserDB, UserMethods>;
-
+export type UserDocument = ReturnType<(typeof UserModel)["hydrate"]>;
+export type UserModelType = Model<UserDB, {}, UserMethods>;
 export type UserDocRepo = UserDocument | null;

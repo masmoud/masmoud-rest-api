@@ -1,9 +1,9 @@
+import { Role } from "@/common/types";
 import bcrypt from "bcryptjs";
 import { Schema, model } from "mongoose";
-import { UserDB, UserMethods } from "./user.types";
-import { Role, RoleArray } from "@/common/types";
+import { UserDB, UserMethods, UserModelType } from "./user.types";
 
-const userSchema = new Schema<UserDB, {}, UserMethods>(
+const userSchema = new Schema<UserDB, UserModelType, UserMethods>(
   {
     email: {
       type: String,
@@ -19,7 +19,7 @@ const userSchema = new Schema<UserDB, {}, UserMethods>(
     },
     role: {
       type: String,
-      enum: RoleArray,
+      enum: Object.values(Role),
       default: Role.USER,
     },
     refreshTokens: {
@@ -42,4 +42,4 @@ userSchema.methods.comparePassword = function (password: string) {
   return bcrypt.compare(password, this.password);
 };
 
-export const UserModel = model<UserDB>("User", userSchema);
+export const UserModel = model<UserDB, UserModelType>("User", userSchema);

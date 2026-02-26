@@ -11,7 +11,10 @@ export const errorHandler = (
 ) => {
   const error =
     err instanceof AppError ? err : (
-      new AppError("Internal Server Error", 500, false)
+      new AppError(
+        err instanceof Error ? err.message : "Internal Server Error",
+        500,
+      )
     );
 
   logs.error.error(error.message, {
@@ -19,12 +22,14 @@ export const errorHandler = (
     stack: config.server.nodeEnv === "development" ? error.stack : undefined,
   });
 
-  res.status(error.statusCode).json({
+  const response: Record<string, any> = {
     success: false,
-    message: error.isOperational ? error.message : "Something went wrong",
-    ...(error.details && typeof error.details === "object" ?
-      { errors: error.details }
-    : {}),
-    ...(config.server.nodeEnv === "development" && { stack: error.stack }),
-  });
+    message: error.message,
+  };
+
+  if (error.details) response.errors = error.message;
+
+  if (config.server.nodeEnv === "development") response.stack = error.stack;
+
+  res.status(error.statusCode).json(response);
 };

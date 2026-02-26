@@ -1,58 +1,62 @@
-import { RequestHandler } from "express";
-import { userService } from "./user.service";
 import { errors } from "@/common/utils";
+import { NextFunction, Request, Response } from "express";
+import { userService } from "./user.service";
 
-export class UserController {
-  static profile: RequestHandler = async (_req, res, next) => {
+class UserController {
+  constructor(private readonly service = userService) {}
+
+  async profile(req: Request, res: Response, next: NextFunction) {
     try {
-      res.json({ user: res.locals.user });
+      if (!req.user) throw errors.Unauthorized("User is not authenticated");
+      const user = req.user;
+      res.json({ user });
     } catch (error) {
       next(error);
     }
-  };
+  }
 
-  static getUserById: RequestHandler = async (req, res, next) => {
+  async getUserById(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.params.id as string;
       if (!userId) throw errors.NotFound("User ID is missing");
 
-      const user = await userService.getUserById(userId);
+      const user = await this.service.getUserById(userId);
       res.json(user);
     } catch (error) {
       next(error);
     }
-  };
+  }
 
-  static listUsers: RequestHandler = async (_req, res, next) => {
+  async listUsers(req: Request, res: Response, next: NextFunction) {
     try {
-      const users = await userService.listUsers();
+      const users = await this.service.listUsers();
       res.json({ users });
     } catch (error) {
       next(error);
     }
-  };
+  }
 
-  static updateUser: RequestHandler = async (req, res, next) => {
+  async updateUser(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.params.id as string;
       if (!userId) throw errors.NotFound("User ID is missing");
 
       const data = req.body;
 
-      const updatedUser = await userService.updateUser(userId, data);
+      const updatedUser = await this.service.updateUser(userId, data);
       res
         .status(200)
         .json({ message: "User updated successfully", user: updatedUser });
     } catch (error) {
       next(error);
     }
-  };
+  }
 
-  static deleteUser: RequestHandler = async (req, res, next) => {
+  async deleteUser(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.params.id as string;
       if (!userId) throw errors.NotFound("User ID is missing");
-      await userService.deleteUser(userId);
+      await this.service.deleteUser(userId);
 
       res.status(200).json({
         message: "User deleted successfully",
@@ -61,5 +65,7 @@ export class UserController {
     } catch (error) {
       next(error);
     }
-  };
+  }
 }
+
+export const userController = new UserController();

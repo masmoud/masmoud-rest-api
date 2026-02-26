@@ -1,22 +1,10 @@
-import { jwtService, authCookies, errors } from "@/common/utils";
-import { authService } from "@/modules/auth";
+import { authCookies, errors, jwtService } from "@/common/utils";
+import { AuthModule } from "@/modules/auth";
+import { UserModule } from "@/modules/user";
 import type { NextFunction, Request, Response } from "express";
-import { RequestUser } from "@/modules/auth/auth.types";
-import { Role } from "@/common/types";
-
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    role: Role;
-  };
-}
 
 export const authenticate = () => {
-  return async (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const cookieToken = req.cookies["accessToken"];
       const authHeader = req.headers.authorization;
@@ -31,33 +19,29 @@ export const authenticate = () => {
 
       try {
         // Verify access token
-        const payload = jwtService.verify.access(token); // type AccessTokenPayload
+        const payload = jwtService.verify.access(token); // type TokenPayload
+        const user = await UserModule.service.getUserById(payload.sub);
 
-        req.user = {
-          id: payload.sub as string,
-          role: payload.role as Role,
-        } as RequestUser;
-        // Attach full safe user to res.locals.user
-        if (!res.locals.user) {
-          const fullUser = await authService.getUserFromToken(token);
-          res.locals.user = fullUser;
+        if (!user) {
+          throw errors.Unauthorized("User not found");
         }
+
+        req.user = user;
 
         return next();
       } catch (error) {
         const refreshToken = req.cookies["refreshToken"];
         if (!refreshToken) throw errors.Unauthorized("Access token expired");
 
-        const tokens = await authService.refresh(refreshToken);
+        const tokens = await AuthModule.service.refresh(refreshToken);
         authCookies.set(res, tokens.accessToken, tokens.refreshToken);
 
-        const fullUser = await authService.getUserFromToken(
+        const user = await AuthModule.service.getUserFromToken(
           tokens.accessToken,
           "access",
         );
 
-        req.user = { id: fullUser.id, role: fullUser.role };
-        res.locals.user = fullUser;
+        req.user = user;
 
         return next();
       }

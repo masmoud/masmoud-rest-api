@@ -2,21 +2,20 @@ import { ApiOverview } from "@/common/types";
 import { config } from "@/config";
 import { docs } from "@/docs";
 import { Request, Response, Router } from "express";
-import { system } from "./system";
-import { v1Router } from "./v1";
+import v1Routes from "./v1/api-v1.routes";
 
 const router = Router();
 
 const serviceStartTime = Date.now();
 
-// List of API versions
+// --- API versions overview ---
 const apiOverview: ApiOverview = {
   service: "Boilerplate API",
   environment: config.server.nodeEnv,
-  uptime: process.uptime(),
+  serviceStartTime: new Date(serviceStartTime).toISOString(),
   versions: Object.entries(docs).map(([version, value]) => ({
     version,
-    url: `/api/${version}`,
+    url: `/${version}`,
     endpoints: value.endpoints.length,
     status: "stable",
     description:
@@ -25,16 +24,13 @@ const apiOverview: ApiOverview = {
 };
 
 // --- API versions ---
-router.use("/v1", v1Router.api);
-router.use("/v1/auth", v1Router.auth);
-router.use("/v1/users", v1Router.user);
-router.use("/v1/docs", v1Router.swagger);
-
-// --- System routes ---
-router.use("/system", system.main);
+router.use("/v1", v1Routes);
 
 router.get("/", (_req: Request, res: Response) => {
-  res.json(apiOverview);
+  res.json({
+    ...apiOverview,
+    uptime: process.uptime(),
+  });
 });
 
 export default router;

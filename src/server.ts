@@ -1,19 +1,19 @@
-import { App } from "./app";
 import { logs } from "@/common/utils";
 import { db } from "@/config/db.config";
 import { config } from "@/config/env.config";
-
-const appInstance = new App();
+import { App, appInstance } from "./app";
+import { seedAdmins } from "./modules/user/seed-admins";
 
 // Service start time for uptime monitoring
 const serviceStartTime = Date.now();
 
 const startServer = async () => {
   try {
-    // --- Connect to database ---
+    // Connect to database
     await db.connect();
+    await seedAdmins();
 
-    // --- Start server ---
+    // Start server
     const server = appInstance.app.listen(config.server.port, () => {
       const baseURL =
         config.server.nodeEnv === "production" ?
@@ -29,7 +29,7 @@ const startServer = async () => {
       logs.main.info(`----------------------------------------`);
     });
 
-    // --- Graceful shutdown for signals ---
+    // Graceful shutdown for signals
     const shutdownHandler = async (signal: string) => {
       logs.main.info(`Received ${signal}. Initiating graceful shutdown...`);
 
@@ -50,7 +50,7 @@ const startServer = async () => {
     process.on("SIGINT", () => shutdownHandler("SIGINT"));
     process.on("SIGTERM", () => shutdownHandler("SIGTERM"));
 
-    // --- Catch uncaught exceptions and unhandled rejections ---
+    // Catch uncaught exceptions and unhandled rejections
     process.on("uncaughtException", (err) => {
       logs.main.error(`Uncaught Exception: ${err.message}`);
       logs.main.error(err.stack);

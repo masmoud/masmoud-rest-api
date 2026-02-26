@@ -1,8 +1,10 @@
 import { ApiV1Detail } from "@/common/types";
 import { docs } from "@/docs";
-import { generateEndpoints } from "@/docs/utils/generate-endpoints";
-import { swaggerDocV1 } from "@/docs/v1/swagger-v1.docs";
 import { Router } from "express";
+import authRoutes from "./auth.routes";
+import swaggerRoutes from "./swagger.routes";
+import systemRoutes from "./system.routes";
+import userRoutes from "./user.routes";
 
 const router = Router();
 
@@ -19,6 +21,11 @@ const apiV1: ApiV1Detail = {
   ],
   endpoints: v1.endpoints,
 };
+
+router.use("/", systemRoutes);
+router.use("/auth", authRoutes);
+router.use("/users", userRoutes);
+router.use("/docs", swaggerRoutes);
 
 router.get("/", (_req, res) => {
   res.json(apiV1);
