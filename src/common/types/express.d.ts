@@ -1,4 +1,4 @@
-import { UserPublic } from "@/modules/user";
+import { UserPublic } from "@/modules/v1/user";
 
 declare global {
   namespace Express {

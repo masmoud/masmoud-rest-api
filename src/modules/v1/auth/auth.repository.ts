@@ -1,7 +1,7 @@
-import { UserDB, UserDocument, UserModelType, UserModule } from "../user";
+import { UserDB, UserDocument, UserModelType, UserV1 } from "../user";
 
 export class AuthRepository {
-  constructor(private readonly userModel: UserModelType = UserModule.model) {}
+  constructor(private readonly userModel: UserModelType = UserV1.model) {}
 
   // Create a new user
   async createUser(

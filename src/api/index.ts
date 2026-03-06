@@ -2,7 +2,7 @@ import { ApiOverview } from "@/common/types";
 import { config } from "@/config";
 import { docs } from "@/docs";
 import { Request, Response, Router } from "express";
-import v1Routes from "./v1/api-v1.routes";
+import v1Routes from "./v1/routes";
 
 const router = Router();
 

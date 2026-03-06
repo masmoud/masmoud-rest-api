@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import { z } from "zod";
 
-dotenv.config();
+dotenv.config({ path: process.env.NODE_ENV === "test" ? ".env.test" : ".env" });
 
 // --- Helpers ---
 const parseList = (value: string) => value.split(",").map((v) => v.trim());
@@ -14,16 +14,6 @@ const isValidUrl = (value: string) => {
     return false;
   }
 };
-
-const isValidJSON = (value: string) => {
-  try {
-    return JSON.parse(value);
-  } catch (error) {
-    throw new Error("ADMIN_USERS must be valid JSON");
-  }
-};
-
-const isValidEmail = (value: string) => z.email().safeParse(value).success;
 
 // --- Schemas ---
 const portSchema = z.coerce.number().int().min(1).max(65535);
@@ -91,6 +81,11 @@ if (!parsedEnv.success) {
   const issues = parsedEnv.error.issues.map(
     (i) => `${i.path.join(".")}: ${i.message}`,
   );
+
+  if (process.env.NODE_ENV === "test") {
+    throw new Error("Invalid env configuration:\n" + issues);
+  }
+
   console.error("Invalid environment variables:\n" + issues.join("\n"));
   process.exit(1);
 }

@@ -5,25 +5,25 @@
 ![Express](https://img.shields.io/badge/Express-4.x-lightgrey)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-Backend API REST built with **Node.js, Express et TypeScript**, including JWT authentication, gestion des rôles et bonnes pratiques d’architecture.
+Backend API REST built with **Node.js, Express et TypeScript**, featuring JWT authentification, role management, and best practices for maintainable architecture.
 
-Ce projet a pour objectif de démontrer une structure backend propre et maintenable.
+This project aims to demonstrate a clean and maintainable backend structure.
 
 ---
 
 ## Features
 
-- Architecture modulaire (Controller / Service / Repository)
-- Authentification JWT (access + refresh tokens)
-- Rotation des refresh tokens
-- Cookies HTTP-only
-- Validation des requêtes (Zod)
-- Gestion centralisée des erreurs
-- Logger (Winston)
-- Sécurité : Helmet, CORS, Rate limiting
-- MongoDB avec Mongoose
-- Seed automatique des comptes admin au démarrage
-- Documentation Swagger (`/api/v1/docs`)
+- Modular architecture (Controller / Service / Repository)
+- JWT authentication (access + refresh tokens)
+- Refresh token rotation
+- HTTP-only cookies
+- Request validation (Zod)
+- Centralized error handling
+- Logging (Winston)
+- Security : Helmet, CORS, Rate limiting
+- MongoDB with Mongoose
+- Automatic seeding of admin accounts on startup
+- Swagger Documentation (`/api/v1/docs`)
 
 ---
 
@@ -33,7 +33,7 @@ Ce projet a pour objectif de démontrer une structure backend propre et maintena
 
 ```bash
 git clone https://github.com/masmoud/masmoud-rest-api.git
-cd node-ts-express-boilerplate
+cd masmoud-rest-api
 ```
 
 ### 2. Install dependencies
@@ -100,14 +100,21 @@ http://localhost:3000/api/v1/docs
 
 ```
 src/
-├─ common/        # middlewares, utils, validators
-├─ config/        # environment & database config
-├─ modules/
-│  ├─ auth/
-│  └─ user/
-├─ routes/
-├─ app.ts
-└─ server.ts
+├─ api/                     # Top-level API router
+│   ├─ index.ts             # API entry point
+│   └─ v1/
+│       ├─ routes.ts        # v1 aggregator
+│       ├─ system/          # health & readiness endpoints
+│       └─ swagger/         # swagger docs routes
+├─ modules/                 # Feature modules
+│   └─ v1/
+│       ├─ auth/            # Auth module
+│       └─ user/            # User module
+├─ common/                  # Middlewares, utils, validators, types
+├─ config/                  # Environment & database configuration
+├─ docs/                    # Swagger/OpenAPI definitions
+├─ app.ts                   # App initialization
+└─ server.ts                # Server entry point
 ```
 
 ---
@@ -136,9 +143,9 @@ Base URL: `http://localhost:3000/api/v1`
 
 ## Possible Improvements
 
-- Tests unitaires
-- RBAC avec permissions dynamiques
-- Dockerisation
+- Unit tests
+- RBAC with dynamic permissions (Role-Based Access Control)
+- Dockerization
 - CI/CD pipeline
 
 ---

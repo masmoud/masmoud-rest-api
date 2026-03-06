@@ -1,8 +1,8 @@
 import { logs } from "@/common/utils";
 import { db } from "@/config/db.config";
 import { config } from "@/config/env.config";
-import { App, appInstance } from "./app";
-import { seedAdmins } from "./modules/user/seed-admins";
+import { appInstance } from "./app";
+import { seedAdmins } from "./modules/v1/user/seed-admins";
 
 // Service start time for uptime monitoring
 const serviceStartTime = Date.now();

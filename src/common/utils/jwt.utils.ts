@@ -1,5 +1,5 @@
 import { config } from "@/config/env.config";
-import { TokenPayload } from "@/modules/auth";
+import { TokenPayload } from "@/modules/v1/auth";
 import jwt from "jsonwebtoken";
 import { errors } from "./errors.utils";
 

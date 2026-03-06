@@ -1,5 +1,6 @@
 import cookieParser from "cookie-parser";
 import express, { Application } from "express";
+import apiRouter from "./api";
 import {
   errorHandler,
   notFound,
@@ -7,7 +8,6 @@ import {
   securityMiddleware,
 } from "./common/middlewares";
 import { compressionConfig } from "./config/compression.config";
-import apiIndexRouter from "./routes/api-index.routes";
 export class App {
   public app: Application;
 
@@ -27,7 +27,7 @@ export class App {
   }
 
   private routes() {
-    this.app.use("/api", apiIndexRouter);
+    this.app.use("/api", apiRouter);
     this.app.use(notFound);
     this.app.use(errorHandler);
   }

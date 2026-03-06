@@ -11,13 +11,15 @@ import {
   UserPublic,
 } from "./user.types";
 import { userSchemas } from "./user.validator";
+import userRoutes from "./user.routes";
 
-export const UserModule = {
+export const UserV1 = {
   schemas: userSchemas,
   model: UserModel,
   service: userService,
   controller: userController,
   repository: userRepository,
+  routes: userRoutes,
 };
 
 export type {

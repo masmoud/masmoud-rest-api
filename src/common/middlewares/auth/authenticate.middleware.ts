@@ -1,6 +1,6 @@
 import { authCookies, errors, jwtService } from "@/common/utils";
-import { AuthModule } from "@/modules/auth";
-import { UserModule } from "@/modules/user";
+import { AuthV1 } from "@/modules/v1/auth";
+import { UserV1 } from "@/modules/v1/user";
 import type { NextFunction, Request, Response } from "express";
 
 export const authenticate = () => {
@@ -20,7 +20,7 @@ export const authenticate = () => {
       try {
         // Verify access token
         const payload = jwtService.verify.access(token); // type TokenPayload
-        const user = await UserModule.service.getUserById(payload.sub);
+        const user = await UserV1.service.getUserById(payload.sub);
 
         if (!user) {
           throw errors.Unauthorized("User not found");
@@ -33,10 +33,10 @@ export const authenticate = () => {
         const refreshToken = req.cookies["refreshToken"];
         if (!refreshToken) throw errors.Unauthorized("Access token expired");
 
-        const tokens = await AuthModule.service.refresh(refreshToken);
+        const tokens = await AuthV1.service.refresh(refreshToken);
         authCookies.set(res, tokens.accessToken, tokens.refreshToken);
 
-        const user = await AuthModule.service.getUserFromToken(
+        const user = await AuthV1.service.getUserFromToken(
           tokens.accessToken,
           "access",
         );
