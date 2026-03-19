@@ -1,17 +1,12 @@
-import { HydratedDocument } from "mongoose";
+import { z } from "zod";
 
-export enum Role {
-  USER = "user",
-  ADMIN = "admin",
-}
-export namespace RoleTypes {
-  export type RoleName = "USER" | "ADMIN";
+export const roles = ["user", "admin"] as const;
 
-  export interface RoleDB {
-    name: RoleName;
-    permissions: string[];
-  }
+export type RoleType = (typeof roles)[number];
 
-  export type RoleDocument = HydratedDocument<RoleDB>;
-  export type RoleDocRepo = RoleDocument | null;
-}
+export const roleSchema = z.enum(roles);
+
+export const Role = Object.freeze({
+  USER: "user",
+  ADMIN: "admin",
+}) satisfies Record<string, RoleType>;

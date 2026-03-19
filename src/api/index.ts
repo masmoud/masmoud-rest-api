@@ -1,8 +1,9 @@
 import { ApiOverview } from "@/common/types";
 import { config } from "@/config";
-import { docs } from "@/docs";
+
 import { Request, Response, Router } from "express";
 import v1Routes from "./v1/routes";
+import { swaggerVersions } from "@/docs";
 
 const router = Router();
 
@@ -13,10 +14,10 @@ const apiOverview: ApiOverview = {
   service: "Boilerplate API",
   environment: config.server.nodeEnv,
   serviceStartTime: new Date(serviceStartTime).toISOString(),
-  versions: Object.entries(docs).map(([version, value]) => ({
+  versions: Object.entries(swaggerVersions).map(([version, doc]) => ({
     version,
     url: `/${version}`,
-    endpoints: value.endpoints.length,
+    endpoints: doc.endpoints.length,
     status: "stable",
     description:
       "First stable version of the API. Supports authentication, JWT, user management.",

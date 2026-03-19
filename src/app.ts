@@ -3,8 +3,9 @@ import express, { Application } from "express";
 import apiRouter from "./api";
 import {
   errorHandler,
+  httpLogger,
   notFound,
-  requestLogger,
+  requestIdMiddleware,
   securityMiddleware,
 } from "./common/middlewares";
 import { compressionConfig } from "./config/compression.config";
@@ -18,12 +19,13 @@ export class App {
   }
 
   private config(): void {
+    this.app.use(requestIdMiddleware);
+    this.app.use(httpLogger);
+    this.app.use(securityMiddleware);
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
     this.app.use(compressionConfig);
-    this.app.use(requestLogger);
-    this.app.use(securityMiddleware);
   }
 
   private routes() {

@@ -1,8 +1,8 @@
-import { logs } from "@/common/utils";
 import { db } from "@/config/db.config";
 import { config } from "@/config/env.config";
 import { appInstance } from "./app";
-import { seedAdmins } from "./modules/v1/user/seed-admins";
+import { logs } from "./common/logger/pino-logger";
+import { seedAdmins } from "./modules/user/seed-admins";
 
 // Service start time for uptime monitoring
 const serviceStartTime = Date.now();
@@ -20,29 +20,29 @@ const startServer = async () => {
           config.server.baseUrl
         : `http://localhost:${config.server.port}/api`;
 
-      logs.main.info(`----------------------------------------`);
-      logs.main.info(`Service: Boilerplate API`);
-      logs.main.info(`Environment: ${config.server.nodeEnv}`);
-      logs.main.info(`API base URL: ${baseURL}`);
-      logs.main.info(`API v1: ${baseURL}/v1`);
-      logs.main.info(`Swagger docs: ${baseURL}/v1/docs`);
-      logs.main.info(`----------------------------------------`);
+      logs.server.info(`----------------------------------------`);
+      logs.server.info(`Service: Boilerplate API`);
+      logs.server.info(`Environment: ${config.server.nodeEnv}`);
+      logs.server.info(`API base URL: ${baseURL}`);
+      logs.server.info(`API v1: ${baseURL}/v1`);
+      logs.server.info(`Swagger docs: ${baseURL}/v1/docs`);
+      logs.server.info(`----------------------------------------`);
     });
 
     // Graceful shutdown for signals
     const shutdownHandler = async (signal: string) => {
-      logs.main.info(`Received ${signal}. Initiating graceful shutdown...`);
+      logs.db.info(`Received ${signal}. Initiating graceful shutdown...`);
 
       server.close(async (err) => {
         if (err) {
-          logs.main.error(`Error closing server: ${err.message}`);
+          logs.db.error(`Error closing server: ${err.message}`);
           process.exit(1);
         }
 
         await db.shutdown(signal);
 
         const uptimeSec = Math.floor((Date.now() - serviceStartTime) / 1000);
-        logs.main.info(`Server stopped. Uptime: ${uptimeSec}s`);
+        logs.server.info(`Server stopped. Uptime: ${uptimeSec}s`);
         process.exit(0);
       });
     };
@@ -52,17 +52,17 @@ const startServer = async () => {
 
     // Catch uncaught exceptions and unhandled rejections
     process.on("uncaughtException", (err) => {
-      logs.main.error(`Uncaught Exception: ${err.message}`);
-      logs.main.error(err.stack);
+      logs.db.error(`Uncaught Exception: ${err.message}`);
+      logs.db.error(err.stack);
       process.exit(1);
     });
 
     process.on("unhandledRejection", (reason: any) => {
-      logs.main.error(`Unhandled Rejection: ${reason}`);
+      logs.db.error(`Unhandled Rejection: ${reason}`);
       process.exit(1);
     });
   } catch (error: any) {
-    logs.main.error(`Failed to start server: ${error.message}`);
+    logs.db.error(`Failed to start server: ${error.message}`);
     process.exit(1);
   }
 };

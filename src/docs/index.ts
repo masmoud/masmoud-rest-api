@@ -1,8 +1,7 @@
-import { buildVersionDocs } from "./utils/build-version";
-import { swaggerDocV1 } from "./v1/swagger-v1.docs";
+import { swaggerV1 } from "./versions/v1";
 
-export const docs = {
-  v1: buildVersionDocs(swaggerDocV1),
-} as const;
+export { swaggerV1 };
 
-export type ApiDocs = typeof docs;
+export const swaggerVersions = {
+  v1: swaggerV1,
+};

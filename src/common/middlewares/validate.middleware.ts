@@ -1,6 +1,6 @@
 import { errors } from "@/common/utils";
 import { NextFunction, Request, Response } from "express";
-import { ZodType } from "zod";
+import { ZodType, ZodError } from "zod";
 
 type RequestTarget = "body" | "query" | "params";
 
@@ -9,7 +9,7 @@ interface ValidateOptions {
 }
 
 export const validate =
-  (schema: ZodType<any>, options: ValidateOptions = { target: "body" }) =>
+  <T>(schema: ZodType<T>, options: ValidateOptions = { target: "body" }) =>
   (req: Request, _res: Response, next: NextFunction) => {
     const { target = "body" } = options;
 
@@ -17,22 +17,26 @@ export const validate =
     const result = schema.safeParse(value);
 
     if (!result.success) {
-      const formattedErrors: Record<string, any> = {};
-
-      result.error.issues.forEach((issue) => {
-        const field = issue.path.join(".");
-
-        formattedErrors[field] = {
-          type: "field",
-          value: value[issue.path[0] as string], // original value
-          msg: issue.message,
-          path: field,
-          location: target,
-        };
-      });
-
-      return next(errors.BadRequest("Validation failed", formattedErrors));
+      return next(
+        errors.BadRequest(
+          "Validation failed",
+          formatZodErrors(result.error, target),
+        ),
+      );
     }
-    req[target] = result.data;
+
+    // overwrite with parsed/typed data
+    req[target] = result.data as any;
+
     next();
   };
+
+// 🔥 Extracted formatter (clean + reusable)
+const formatZodErrors = (error: ZodError, location: RequestTarget) => {
+  return error.issues.map((issue) => ({
+    field: issue.path.join("."),
+    message: issue.message,
+    code: issue.code,
+    location,
+  }));
+};

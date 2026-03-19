@@ -4,4 +4,4 @@ export type {
   ApiV1Detail,
   ApiVersionInfo,
 } from "./api.types";
-export { Role } from "./role.types";
+export { Role, roles, roleSchema, type RoleType } from "./role.types";
