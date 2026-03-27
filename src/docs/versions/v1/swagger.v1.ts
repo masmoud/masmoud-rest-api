@@ -7,21 +7,21 @@ import { systemSchemas } from "./system/system.schemas";
 import { userPaths } from "./user/user.paths";
 import { userSchemas } from "./user/user.schemas";
 
-// Merge all paths
+// Merge all route paths.
 const paths: OpenAPIV3.PathsObject = {
   ...authPaths,
   ...userPaths,
   ...systemPaths,
 };
 
-// Merge all schemas
+// Merge all component schemas.
 const schemas: OpenAPIV3.ComponentsObject["schemas"] = {
   ...authSchemas,
   ...userSchemas,
   ...systemSchemas,
 };
 
-// Tags for grouping
+// Tags used by Swagger UI.
 const tags: OpenAPIV3.TagObject[] = [
   { name: "Auth", description: "Authentication endpoints" },
   { name: "Admin", description: "Admin-only endpoints" },
@@ -29,7 +29,7 @@ const tags: OpenAPIV3.TagObject[] = [
   { name: "System", description: "Health and system endpoints" },
 ];
 
-// Full OpenAPI document
+// OpenAPI document.
 export const swaggerDocument: OpenAPIV3.Document = {
   openapi: "3.0.3",
   info: {
@@ -47,19 +47,18 @@ export const swaggerDocument: OpenAPIV3.Document = {
     ...swaggerComponents,
     schemas,
   },
-  security: [], // default empty; per-route overrides
-  // Global examples for JWT login flow
+  security: [], // Defaults to no auth; protected routes define their own requirements.
   externalDocs: {
     description: "Example JWT usage",
     url: "https://jwt.io/",
   },
 };
 
-// Swagger UI custom options
+// Swagger UI options.
 export const swaggerOptions = {
   swaggerOptions: {
-    persistAuthorization: true, // Keep token after page reload
-    docExpansion: "list", // Collapse endpoints by default
-    defaultModelsExpandDepth: -1, // Hide schemas by default
+    persistAuthorization: true, // Keep token after page reload.
+    docExpansion: "list", // Collapse endpoints by default.
+    defaultModelsExpandDepth: -1, // Hide schemas by default.
   },
 };

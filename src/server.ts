@@ -4,16 +4,16 @@ import { appInstance } from "./app";
 import { logs } from "./common/logger/pino-logger";
 import { seedAdmins } from "./modules/user/seed-admins";
 
-// Service start time for uptime monitoring
+// Track service start time for uptime reporting.
 const serviceStartTime = Date.now();
 
 const startServer = async () => {
   try {
-    // Connect to database
+    // Connect to dependencies.
     await db.connect();
     await seedAdmins();
 
-    // Start server
+    // Start HTTP server.
     const server = appInstance.app.listen(config.server.port, () => {
       const baseURL =
         config.server.nodeEnv === "production" ?
@@ -29,7 +29,7 @@ const startServer = async () => {
       logs.server.info(`----------------------------------------`);
     });
 
-    // Graceful shutdown for signals
+    // Handle process shutdown signals.
     const shutdownHandler = async (signal: string) => {
       logs.db.info(`Received ${signal}. Initiating graceful shutdown...`);
 
@@ -50,7 +50,7 @@ const startServer = async () => {
     process.on("SIGINT", () => shutdownHandler("SIGINT"));
     process.on("SIGTERM", () => shutdownHandler("SIGTERM"));
 
-    // Catch uncaught exceptions and unhandled rejections
+    // Handle unexpected process-level errors.
     process.on("uncaughtException", (err) => {
       logs.db.error(`Uncaught Exception: ${err.message}`);
       logs.db.error(err.stack);
@@ -67,5 +67,5 @@ const startServer = async () => {
   }
 };
 
-// --- Start the server ---
+// Start the server.
 startServer();

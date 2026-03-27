@@ -54,7 +54,7 @@ export class AuthService {
       role: _role,
     });
 
-    // Generate tokens
+    // Issue access and refresh tokens for the new account.
     const accessToken = tokenService.generate.access({
       sub: authDoc._id.toString(),
       role: authDoc.role,
@@ -109,7 +109,7 @@ export class AuthService {
       throw errors.Unauthorized("Invalid or expired refresh token");
     }
 
-    // Rotate tokens
+    // Rotate refresh token on each refresh request.
     const { refreshToken: newToken, hashedRefreshToken } =
       tokenService.generate.refresh(authDoc._id.toString());
 

@@ -108,11 +108,11 @@ class UserController {
 
     this.ensureSelfOrAdmin(req, userId);
 
-    // Fetch user to get authId before deletion
+    // Load user first to access linked auth id.
     const user = await this.service.getUserById(userId);
     if (!user) throw errors.NotFound("User not found");
 
-    // Delete associated auth record if it exists
+    // Delete linked auth record when present.
     if (user.authId) {
       const deletedAuth = await this.authRepo.deleteById(user.authId);
       if (deletedAuth) {
@@ -120,7 +120,7 @@ class UserController {
       }
     }
 
-    // Delete the user
+    // Delete user record.
     await this.service.deleteUser(userId);
     log.info({ userId, message: "User deleted successfully" });
 

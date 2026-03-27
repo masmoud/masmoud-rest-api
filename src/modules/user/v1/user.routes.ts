@@ -6,7 +6,7 @@ import { userController } from "./user.controller";
 
 const router = Router();
 
-// Authenticated User Profile
+// Authenticated profile endpoints.
 router.get("/profile", authenticate(), userController.profile);
 router.put(
   "/profile",
@@ -15,7 +15,7 @@ router.put(
   userController.updateProfile,
 );
 
-// Users CRUD
+// User resource endpoints.
 router.get("/:id", authenticate(), userController.getUserById);
 router.get(
   "/",

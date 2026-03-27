@@ -12,7 +12,7 @@ export const LoginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-// Response schema
+// Authentication response schema.
 export const AuthResponseSchema = z.object({
   success: z.boolean(),
   message: z.string(),
@@ -25,7 +25,7 @@ export const AuthResponseSchema = z.object({
   }),
 });
 
-// New: refresh response
+// Refresh response schema.
 export const RefreshResponseSchema = z.object({
   success: z.boolean(),
   message: z.string(),
@@ -34,7 +34,7 @@ export const RefreshResponseSchema = z.object({
   }),
 });
 
-// New: logout response
+// Logout response schema.
 export const LogoutResponseSchema = z.object({
   success: z.boolean(),
   message: z.string(),

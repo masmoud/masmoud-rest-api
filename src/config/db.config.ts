@@ -18,7 +18,7 @@ class Database {
     autoCreate: true,
   };
 
-  //  Connect to MongoDB
+  // Connect to MongoDB.
   async connect(): Promise<void> {
     if (this.connected) {
       logs.db.warn("MongoDB already connected");
@@ -38,7 +38,7 @@ class Database {
     }
   }
 
-  // Disconnect from MongoDB
+  // Disconnect from MongoDB.
   async disconnect(): Promise<void> {
     if (!this.connected) {
       logs.db.warn("MongoDB already disconnected");
@@ -54,14 +54,14 @@ class Database {
     }
   }
 
-  // Graceful shutdown handler
+  // Handle graceful shutdown.
   async shutdown(signal: "SIGINT" | "SIGTERM" | string): Promise<void> {
     logs.db.info(`Received ${signal}. Shutting down gracefully...`);
     await this.disconnect();
     process.exit(0);
   }
 
-  // Return connection status
+  // Return current connection status.
   isConnected(): boolean {
     return this.connected;
   }
@@ -70,7 +70,7 @@ class Database {
     return { connected: this.connected };
   }
 
-  // Attach mongoose event listeners once
+  // Attach Mongoose event listeners once.
   private attachEventListeners(): void {
     if (this.listenersAttached) return;
 

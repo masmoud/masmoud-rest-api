@@ -34,16 +34,16 @@ class AuthController {
       );
     }
 
-    // Create Auth record
+    // Create auth record.
     const auth = await this.service.register(email, password, Role.USER);
 
-    // Create User profile linked to authId
+    // Create user profile linked to auth id.
     const user = await this.users.create({
       authId: auth.user.id,
     });
     log.info({ userId: user._id, authId: user.authId }, "User profile created");
 
-    // Set access and refresh tokens HTTP-only cookie
+    // Store access and refresh tokens as HTTP-only cookies.
     authCookies.set(res, auth.accessToken, auth.refreshToken);
 
     sendResponse(res, 201, {
@@ -107,7 +107,7 @@ class AuthController {
     }
 
     const tokens = await this.service.refresh(token);
-    authCookies.set(res, tokens.accessToken, tokens.refreshToken); // Rotate token
+    authCookies.set(res, tokens.accessToken, tokens.refreshToken); // Rotate cookie tokens.
 
     log.info({ userId: req.auth?.id }, "Refresh token rotated");
 

@@ -5,7 +5,7 @@ import { ZodType, ZodError } from "zod";
 type RequestTarget = "body" | "query" | "params";
 
 interface ValidateOptions {
-  target?: RequestTarget; // default: body
+  target?: RequestTarget; // Defaults to request body.
 }
 
 export const validate =
@@ -25,13 +25,13 @@ export const validate =
       );
     }
 
-    // overwrite with parsed/typed data
+    // Replace request input with parsed and normalized values.
     req[target] = result.data as any;
 
     next();
   };
 
-// 🔥 Extracted formatter (clean + reusable)
+// Convert Zod issues to a stable API error format.
 const formatZodErrors = (error: ZodError, location: RequestTarget) => {
   return error.issues.map((issue) => ({
     field: issue.path.join("."),

@@ -9,7 +9,7 @@ import {
 export class AuthRepository {
   constructor(private readonly authModel: AuthModelType = AuthModel) {}
 
-  // register
+  // Create a new auth record.
   async register(
     data: Pick<IAuth, "email" | "password" | "role">,
   ): Promise<AuthDocument> {
@@ -17,12 +17,12 @@ export class AuthRepository {
     return await auth.save();
   }
 
-  // Find user by email
+  // Find auth record by email.
   async findByEmail(email: string): Promise<AuthDocumentRepo> {
     return this.authModel.findOne({ email }).select("+password").exec();
   }
 
-  // Find user by Mongo ID
+  // Find auth record by Mongo id.
   async findById(id: string): Promise<AuthDocumentRepo> {
     return this.authModel.findById(id).exec();
   }
@@ -31,7 +31,7 @@ export class AuthRepository {
     return this.authModel.findByIdAndDelete(id).exec();
   }
 
-  // Add a hashed refresh token to a user
+  // Store a hashed refresh token.
   async addRefreshToken(userId: string, hashedToken: string): Promise<void> {
     await this.authModel
       .findByIdAndUpdate(userId, {
@@ -40,12 +40,12 @@ export class AuthRepository {
       .exec();
   }
 
-  // Find user by a hashed refresh token
+  // Find auth record by hashed refresh token.
   async findByRefreshToken(hashedToken: string): Promise<AuthDocumentRepo> {
     return this.authModel.findOne({ refreshTokens: hashedToken }).exec();
   }
 
-  // Remove a hashed refresh token
+  // Remove a hashed refresh token.
   async removeRefreshToken(userId: string, hashedToken: string): Promise<void> {
     await this.authModel
       .findByIdAndUpdate(userId, {
@@ -54,7 +54,7 @@ export class AuthRepository {
       .exec();
   }
 
-  // Clear all refresh tokens for a user
+  // Clear all refresh tokens for an auth record.
   async clearRefreshTokens(userId: string): Promise<void> {
     await this.authModel
       .findByIdAndUpdate(userId, {

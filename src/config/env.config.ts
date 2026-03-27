@@ -6,7 +6,7 @@ dotenv.config({
   quiet: process.env.NODE_ENV === "test",
 });
 
-// --- Helpers ---
+// Helpers
 const parseList = (value: string) => value.split(",").map((v) => v.trim());
 
 const isValidUrl = (value: string) => {
@@ -18,7 +18,7 @@ const isValidUrl = (value: string) => {
   }
 };
 
-// --- Schemas ---
+// Schemas
 const portSchema = z.coerce.number().int().min(1).max(65535);
 
 const urlSchema = z.url().refine(isValidUrl, "Must be a valid URL");
@@ -48,21 +48,19 @@ const adminUsersSchema = z
         code: "custom",
         message: "ADMIN_USERS must be valid JSON",
       });
-      return z.NEVER; // Parsing failed
+      return z.NEVER;
     }
   })
   .pipe(z.array(adminUserSchema));
 
-// --- Enums ---
+// Enums
 export enum NodeEnv {
   DEVELOPMENT = "development",
   PRODUCTION = "production",
   TEST = "test",
 }
 
-// --- Admin users zod schema ---
-
-// --- Zod schema ---
+// Root environment schema
 const envSchema = z.object({
   NODE_ENV: z.enum(Object.values(NodeEnv)).default(NodeEnv.DEVELOPMENT),
   PORT: portSchema.default(3000),
@@ -77,7 +75,7 @@ const envSchema = z.object({
   LOG_LEVEL: z.string().default("info"),
 });
 
-// --- Parse & validate ---
+// Parse and validate environment variables.
 const parsedEnv = envSchema.safeParse(process.env);
 
 if (!parsedEnv.success) {
@@ -95,12 +93,12 @@ if (!parsedEnv.success) {
 
 const data = parsedEnv.data;
 
-// --- Auth config ---
+// Auth configuration
 const authConfig = {
   adminUsers: data.ADMIN_USERS,
 } as const;
 
-// --- Server config ---
+// Server configuration
 const serverConfig = {
   nodeEnv: data.NODE_ENV as NodeEnv,
   isProd: data.NODE_ENV === NodeEnv.PRODUCTION,
@@ -108,12 +106,12 @@ const serverConfig = {
   baseUrl: data.BASE_URL || `http://localhost:${data.PORT}`,
 } as const;
 
-// --- Database config ---
+// Database configuration
 const dbConfig = {
   mongoUri: data.MONGO_URI,
 } as const;
 
-// --- JWT config ---
+// JWT configuration
 const jwtConfig = {
   access: {
     secret: data.JWT_ACCESS,
@@ -125,17 +123,17 @@ const jwtConfig = {
   },
 } as const;
 
-// CORS config
+// CORS configuration
 const corsConfig = {
   allowedOrigins: data.ALLOWED_ORIGINS,
 } as const;
 
-// --- Logger config ---
+// Logger configuration
 const winstonConfig = {
   logLevel: data.LOG_LEVEL,
 } as const;
 
-// --- Export ---
+// Export validated configuration.
 export const config: Readonly<{
   auth: typeof authConfig;
   server: typeof serverConfig;

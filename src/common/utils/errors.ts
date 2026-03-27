@@ -22,7 +22,7 @@ export class AppError extends Error {
     this.code = code;
     this.details = details;
 
-    // Maintains proper stack trace in V8
+    // Preserve stack trace in V8 runtimes.
     Error.captureStackTrace(this, this.constructor);
   }
 }
@@ -39,7 +39,7 @@ const createErrors = {
   Conflict: (msg = "Conflict", details?: unknown) =>
     new AppError(msg, 409, "CONFLICT", details),
 
-  // Optional: handle common Mongoose errors
+  // Map common Mongoose errors to API errors.
   handleMongooseError: (err: unknown) => {
     if (typeof err === "object" && err !== null) {
       const e = err as any;

@@ -9,7 +9,7 @@ const router = Router();
 
 const serviceStartTime = Date.now();
 
-// --- API versions overview ---
+// API versions overview.
 const apiOverview: ApiOverview = {
   service: "Boilerplate API",
   environment: config.server.nodeEnv,
@@ -24,7 +24,7 @@ const apiOverview: ApiOverview = {
   })),
 };
 
-// --- API versions ---
+// API version routes.
 router.use("/v1", v1Routes);
 
 router.get("/", (_req: Request, res: Response) => {

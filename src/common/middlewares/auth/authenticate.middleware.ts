@@ -19,36 +19,34 @@ const extractTokenFromHeader = (req: Request): string | null => {
 export const authenticate = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Extract token
+      // Resolve access token from header or cookie.
       const token = extractTokenFromHeader(req);
       if (!token) throw errors.Unauthorized("Missing access token");
 
       let auth = null;
 
       try {
-        // Try to get AuthContext from access token
+        // Validate access token first.
         auth = await authService.getAuthFromToken(token);
       } catch {
-        // If access token fails, try refresh token rotation
+        // If access token is invalid, attempt refresh-token rotation.
         const refreshToken = req.cookies["refreshToken"];
         if (!refreshToken) throw errors.Unauthorized("Access token expired");
 
-        // Rotate tokens
+        // Rotate tokens and update cookies.
         const tokens = await authService.refresh(refreshToken);
-
-        // Update cookies
         authCookies.set(res, tokens.accessToken, tokens.refreshToken);
 
-        // Re-fetch AuthContext from new access token
+        // Re-hydrate auth context from the fresh access token.
         auth = await authService.getAuthFromToken(tokens.accessToken, "access");
       }
       if (!auth) throw errors.Unauthorized("Invalid or expired token");
 
-      // Fetch associated user
+      // Fetch associated user profile.
       const user = await userRepository.findByAuthId(auth.id);
-      if (!user) throw errors.Unauthorized("User not foud");
+      if (!user) throw errors.Unauthorized("User not found");
 
-      // Attach to request
+      // Attach auth and user context to the request.
       req.auth = auth;
       req.user = toPublicUser(user);
 
