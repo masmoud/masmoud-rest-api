@@ -1,6 +1,5 @@
 import { RoleType } from "@/common/types";
 import { errors, hashToken } from "@/common/utils";
-import { userRepository } from "../../user/v1/user.repository";
 import { tokenService } from "../auth.token";
 import {
   AccessTokenPayload,
@@ -52,6 +51,7 @@ export class AuthService {
     const authDoc = await this.repo.register({
       email,
       password,
+      role: _role,
     });
 
     // Generate tokens
@@ -79,7 +79,7 @@ export class AuthService {
     const isMatch = await authDoc.comparePassword(password);
     if (!isMatch) throw errors.Unauthorized("Invalid credentials");
 
-    const accessToken = tokenService.sign.access({
+    const accessToken = tokenService.generate.access({
       sub: authDoc._id.toString(),
       role: authDoc.role,
     });
@@ -100,10 +100,14 @@ export class AuthService {
   async refresh(refreshToken: string) {
     if (!refreshToken) throw errors.Unauthorized("No refresh token provided");
 
+    const payload = tokenService.verify.refresh(refreshToken);
     const hashed = hashToken(refreshToken);
-    const authDoc = await this.repo.findByRefreshToken(hashed);
+    const authDoc = await this.repo.findById(payload.sub);
 
     if (!authDoc) throw errors.Unauthorized("Invalid or expired refresh token");
+    if (!authDoc.refreshTokens.includes(hashed)) {
+      throw errors.Unauthorized("Invalid or expired refresh token");
+    }
 
     // Rotate tokens
     const { refreshToken: newToken, hashedRefreshToken } =
@@ -112,7 +116,7 @@ export class AuthService {
     await this.repo.removeRefreshToken(authDoc._id.toString(), hashed);
     await this.repo.addRefreshToken(authDoc._id.toString(), hashedRefreshToken);
 
-    const accessToken = tokenService.sign.access({
+    const accessToken = tokenService.generate.access({
       sub: authDoc._id.toString(),
       role: authDoc.role,
     });
@@ -124,7 +128,7 @@ export class AuthService {
   }
 
   async logout(authId: string, refreshToken: string): Promise<void> {
-    await this.repo.removeRefreshToken(authId, refreshToken);
+    await this.repo.removeRefreshToken(authId, hashToken(refreshToken));
   }
 }
 

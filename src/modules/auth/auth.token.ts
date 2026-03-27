@@ -2,8 +2,8 @@ import { hashToken } from "@/common/utils";
 import { config } from "@/config";
 import jwt, { SignOptions } from "jsonwebtoken";
 import {
-  JwtExpiry,
   AccessTokenPayload,
+  JwtExpiry,
   RefreshTokenPayload,
 } from "./auth.types";
 
@@ -30,11 +30,7 @@ const verifyToken = (
 };
 
 const generateAccess = (payload: AccessTokenPayload) => {
-  return signToken(
-    payload,
-    config.jwt.access.secret,
-    config.jwt.access.expiresIn as JwtExpiry,
-  );
+  return tokenService.sign.access(payload);
 };
 
 const generateRefresh = (authId: string) => {

@@ -8,6 +8,12 @@ const router = Router();
 
 // Authenticated User Profile
 router.get("/profile", authenticate(), userController.profile);
+router.put(
+  "/profile",
+  authenticate(),
+  validate(UpdateUserSchema),
+  userController.updateProfile,
+);
 
 // Users CRUD
 router.get("/:id", authenticate(), userController.getUserById);

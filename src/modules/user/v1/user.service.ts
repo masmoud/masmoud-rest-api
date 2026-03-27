@@ -1,28 +1,31 @@
 import { errors } from "@/common/utils";
 import { IUser } from "../user.types";
+import { UserDocument } from "./user.model";
 import { UserRepository, userRepository } from "./user.repository";
 
 export class UserService {
   constructor(private readonly repo: UserRepository = userRepository) {}
 
-  async getProfile(userId: string): Promise<IUser> {
+  async getProfile(userId: string): Promise<UserDocument> {
     const user = await this.repo.findById(userId);
     if (!user) throw errors.Unauthorized("User not authenticated");
     return user;
   }
 
-  async listUsers(): Promise<IUser[]> {
-    const users = await this.repo.findAll();
-    return users.map((user) => user);
+  async listUsers(): Promise<UserDocument[]> {
+    return this.repo.findAll();
   }
 
-  async getUserById(userId: string): Promise<IUser> {
+  async getUserById(userId: string): Promise<UserDocument> {
     const user = await this.repo.findById(userId);
     if (!user) throw errors.NotFound("User not found");
     return user;
   }
 
-  async updateUser(userId: string, data: Partial<any>): Promise<IUser> {
+  async updateUser(
+    userId: string,
+    data: Partial<IUser>,
+  ): Promise<UserDocument> {
     const user = await this.repo.update(userId, data);
     if (!user) throw errors.NotFound("User not found");
     return user;

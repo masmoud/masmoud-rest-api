@@ -1,11 +1,11 @@
-import { roleSchema } from "@/common/types/role.types";
 import { z } from "zod";
 
-export const RegisterSchema = z.object({
-  email: z.email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  role: roleSchema.optional(),
-});
+export const RegisterSchema = z
+  .object({
+    email: z.email("Invalid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+  })
+  .strict();
 
 export const LoginSchema = z.object({
   email: z.email("Invalid email address"),

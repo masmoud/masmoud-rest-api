@@ -2,6 +2,7 @@ import { logs } from "@/common/logger/pino-logger";
 import { Role } from "@/common/types";
 import { config } from "@/config";
 import { AuthModel } from "../auth/v1";
+import { userRepository } from "./v1/user.repository";
 
 export async function seedAdmins() {
   const adminUsers = config.auth.adminUsers;
@@ -12,24 +13,30 @@ export async function seedAdmins() {
   }
 
   for (const admin of adminUsers) {
-    const existingAdmin = await AuthModel.findOne({
+    let auth = await AuthModel.findOne({
       email: admin.email,
     });
 
-    if (existingAdmin) {
+    if (auth) {
       logs.db.info(`Admin already exists: ${admin.email}`);
-      logs.db.info(`Admin already exists: ${admin.email}`);
+    } else {
+      auth = await AuthModel.create({
+        email: admin.email,
+        password: admin.password,
+        role: Role.ADMIN,
+      });
 
-      continue;
+      logs.db.info(`Admin created: ${admin.email}`);
     }
 
-    await AuthModel.create({
-      email: admin.email,
-      password: admin.password,
-      role: Role.ADMIN,
-    });
+    const existingProfile = await userRepository.findByAuthId(
+      auth._id.toString(),
+    );
 
-    logs.db.info(`Admin created: ${admin.email}`);
+    if (!existingProfile) {
+      await userRepository.create({ authId: auth._id.toString() });
+      logs.db.info(`Admin profile created: ${admin.email}`);
+    }
   }
   logs.db.info("Admin seeding completed.");
 }

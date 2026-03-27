@@ -1,21 +1,20 @@
-import { Role } from "@/common/types";
 import { z } from "zod";
 
-// --- Schéma pour création / mise à jour utilisateur ---
+const optionalNameField = (fieldName: string) =>
+  z.string().trim().max(50, `${fieldName} too long`).optional();
+
 export const UserSchema = z.object({
-  email: z.email("Invald email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(Object.values(Role)).default(Role.USER),
+  id: z.string(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
 });
 
-export const UpdateUserSchema = z.object({
-  email: z.email("Invalid email").optional(),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .optional(),
-  role: z.enum(Object.values(Role)).optional(),
-});
+export const UpdateUserSchema = z
+  .object({
+    firstName: optionalNameField("First name"),
+    lastName: optionalNameField("Last name"),
+  })
+  .strict();
 
 export const UserResponseSchema = z.object({
   user: UserSchema,

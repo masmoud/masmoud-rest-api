@@ -1,5 +1,4 @@
-// src/common/logger/pinoLogger.ts
-import { config } from "@/config";
+import { config } from "@/config/env.config";
 import pino from "pino";
 
 const isDev = process.env.NODE_ENV !== "production";

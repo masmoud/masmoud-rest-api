@@ -17,7 +17,7 @@ router.post(
 
 router.post("/register", validate(RegisterSchema), authController.register);
 router.post("/login", validate(LoginSchema), authController.login);
-router.post("/refresh", authenticate(), authController.refresh);
+router.post("/refresh", authController.refresh);
 router.post("/logout", authenticate(), authController.logout);
 
 export default router;

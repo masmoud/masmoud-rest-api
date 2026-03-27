@@ -17,10 +17,6 @@ export class UserRepository {
     return this.userModel.findById(id).exec();
   };
 
-  findByEmail = async (email: string): Promise<UserDocumentRepo> => {
-    return this.userModel.findOne({ email }).exec();
-  };
-
   create = async (data: Partial<IUser>): Promise<UserDocument> => {
     try {
       return this.userModel.create(data);

@@ -1,7 +1,10 @@
 import dotenv from "dotenv";
 import { z } from "zod";
 
-dotenv.config({ path: process.env.NODE_ENV === "test" ? ".env.test" : ".env" });
+dotenv.config({
+  path: process.env.NODE_ENV === "test" ? ".env.test" : ".env",
+  quiet: process.env.NODE_ENV === "test",
+});
 
 // --- Helpers ---
 const parseList = (value: string) => value.split(",").map((v) => v.trim());

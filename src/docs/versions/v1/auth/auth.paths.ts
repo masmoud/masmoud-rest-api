@@ -20,7 +20,9 @@ export const authPaths: OpenAPIV3.PathsObject = {
           description: "User successfully registered",
           content: {
             "application/json": {
-              schema: { $ref: "#/components/schemas/ApiResponseAuth" },
+              schema: {
+                $ref: "#/components/schemas/ApiResponseAuthRegister",
+              },
             },
           },
         },
@@ -51,10 +53,11 @@ export const authPaths: OpenAPIV3.PathsObject = {
           description: "User successfully logged in",
           content: {
             "application/json": {
-              schema: { $ref: "#/components/schemas/ApiResponseAuth" },
+              schema: { $ref: "#/components/schemas/ApiResponseAuthLogin" },
             },
           },
         },
+        "400": { description: "Validation failed" },
         "401": { description: "Invalid credentials" },
       },
     },
@@ -85,7 +88,7 @@ export const authPaths: OpenAPIV3.PathsObject = {
     post: {
       tags: ["Auth"],
       summary: "Logout user",
-      security: [],
+      security: [{ bearerAuth: [] }],
       description:
         "Logs out the user and invalidates the refresh token stored in cookies.",
       responses: {
@@ -93,7 +96,7 @@ export const authPaths: OpenAPIV3.PathsObject = {
           description: "User successfully logged out",
           content: {
             "application/json": {
-              schema: { $ref: "#/components/schemas/ApiResponseMessage" },
+              schema: { $ref: "#/components/schemas/ApiResponseAuthLogout" },
             },
           },
         },
@@ -122,10 +125,13 @@ export const authPaths: OpenAPIV3.PathsObject = {
           description: "Admin successfully created",
           content: {
             "application/json": {
-              schema: { $ref: "#/components/schemas/ApiResponseAdmin" },
+              schema: {
+                $ref: "#/components/schemas/ApiResponseAuthAdminRegister",
+              },
             },
           },
         },
+        "400": { description: "Validation failed" },
         "401": { description: "Unauthorized" },
         "403": { description: "Only admins can create new admins" },
       },

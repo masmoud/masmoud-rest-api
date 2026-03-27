@@ -29,7 +29,7 @@ export interface AuthResponse {
 }
 
 export interface AuthMethods {
-  comparePassword(pssword: string): Promise<boolean>;
+  comparePassword(password: string): Promise<boolean>;
 }
 
 export type UserModelType = Model<IAuth, {}, AuthMethods>;

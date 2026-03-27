@@ -8,10 +8,9 @@ import {
 } from "@/common/utils";
 import { config } from "@/config";
 import { userRepository } from "@/modules/user/v1/user.repository";
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { AuthPublic } from "../auth.types";
 import { authService } from "./auth.service";
-import { access } from "fs";
 
 class AuthController {
   constructor(
@@ -30,7 +29,7 @@ class AuthController {
 
     if (isAdminEmail) {
       log.warn({ email }, "Attempted admin registration via public endpoint");
-      return errors.Forbidden(
+      throw errors.Forbidden(
         "Admin accounts cannot register through public endpoint.",
       );
     }
@@ -79,7 +78,7 @@ class AuthController {
   });
 
   login = asyncHandler(async (req: Request, res: Response) => {
-    const log = logs.child("AUTH_REGISTER", req.requestId);
+    const log = logs.child("AUTH_LOGIN", req.requestId);
 
     const { email, password } = req.body;
     const result = await this.service.login(email, password);

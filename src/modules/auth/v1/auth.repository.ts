@@ -1,4 +1,3 @@
-import { UserModel } from "@/modules/user/v1/user.model";
 import { IAuth } from "../auth.types";
 import {
   AuthDocument,
@@ -8,14 +7,11 @@ import {
 } from "./auth.model";
 
 export class AuthRepository {
-  constructor(
-    private readonly authModel: AuthModelType = AuthModel,
-    private readonly userModel = UserModel,
-  ) {}
+  constructor(private readonly authModel: AuthModelType = AuthModel) {}
 
   // register
   async register(
-    data: Pick<IAuth, "email" | "password">,
+    data: Pick<IAuth, "email" | "password" | "role">,
   ): Promise<AuthDocument> {
     const auth = new this.authModel(data);
     return await auth.save();

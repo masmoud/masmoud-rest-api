@@ -32,7 +32,7 @@ export const authSchemas: { [key: string]: OpenAPIV3.SchemaObject } = {
     },
   },
 
-  AuthResponse: {
+  AuthLoginResponse: {
     type: "object",
     required: ["user", "accessToken"],
     properties: {
@@ -41,13 +41,39 @@ export const authSchemas: { [key: string]: OpenAPIV3.SchemaObject } = {
     },
   },
 
-  ApiResponseAuth: {
+  AuthRegisterResponse: {
+    type: "object",
+    required: ["user", "accessToken"],
+    properties: {
+      user: {
+        type: "object",
+        required: ["id", "authId"],
+        properties: {
+          id: { type: "string", example: "64f1c7b2a3f12a1234567890" },
+          authId: { type: "string", example: "64f1c7b2a3f12a1234567890" },
+        },
+      },
+      accessToken: { type: "string", example: "jwt.access.token" },
+    },
+  },
+
+  ApiResponseAuthLogin: {
     type: "object",
     required: ["success", "message", "data"],
     properties: {
       success: { type: "boolean", example: true },
       message: { type: "string", example: "User logged in successfully" },
-      data: { $ref: "#/components/schemas/AuthResponse" },
+      data: { $ref: "#/components/schemas/AuthLoginResponse" },
+    },
+  },
+
+  ApiResponseAuthRegister: {
+    type: "object",
+    required: ["success", "message", "data"],
+    properties: {
+      success: { type: "boolean", example: true },
+      message: { type: "string", example: "Success" },
+      data: { $ref: "#/components/schemas/AuthRegisterResponse" },
     },
   },
 
@@ -60,7 +86,6 @@ export const authSchemas: { [key: string]: OpenAPIV3.SchemaObject } = {
       data: {
         type: "object",
         properties: {
-          message: { type: "string", example: "Token refreshed" },
           accessToken: { type: "string", example: "jwt.access.token" },
         },
         required: ["accessToken"],
@@ -68,7 +93,7 @@ export const authSchemas: { [key: string]: OpenAPIV3.SchemaObject } = {
     },
   },
 
-  ApiResponseMessage: {
+  ApiResponseAuthLogout: {
     type: "object",
     required: ["success", "message", "data"],
     properties: {
@@ -77,19 +102,19 @@ export const authSchemas: { [key: string]: OpenAPIV3.SchemaObject } = {
       data: {
         type: "object",
         properties: {
-          message: { type: "string", example: "Logged out successfully" },
+          userId: { type: "string", example: "64f1c7b2a3f12a1234567890" },
         },
-        required: ["message"],
+        required: ["userId"],
       },
     },
   },
 
-  ApiResponseAdmin: {
+  ApiResponseAuthAdminRegister: {
     type: "object",
     required: ["success", "message", "data"],
     properties: {
       success: { type: "boolean", example: true },
-      message: { type: "string", example: "Admin user created successfully" },
+      message: { type: "string", example: "Success" },
       data: {
         type: "object",
         properties: {

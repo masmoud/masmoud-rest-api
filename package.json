@@ -4,11 +4,12 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "nodemon",
     "build": "tsc && tsc-alias",
     "start": "node dist/server.js",
-    "seed:admins": "ts-node src/seeds/seed-admins.ts",
-    "tree": "ts-node ./scripts/tree.ts"
+    "server:dev": "tsx src/server.ts",
+    "test:all": "node scripts/test-all.js",
+    "test:unit": "jest --selectProjects unit --verbose",
+    "test:integration": "cross-env SKIP_INTEGRATION_DB=true jest --selectProjects integration --runTestsByPath tests/system.health.integration.spec.ts --verbose"
   },
   "repository": {
     "type": "git",
@@ -19,6 +20,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.28.0",
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
@@ -53,6 +55,7 @@
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
+    "cross-env": "^10.1.0",
     "jest": "^30.2.0",
     "mongodb-memory-server": "^11.0.1",
     "nodemon": "^3.1.11",
@@ -61,6 +64,7 @@
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

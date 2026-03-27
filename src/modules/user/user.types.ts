@@ -1,15 +1,11 @@
-import { RoleType } from "@/common/types/role.types";
-
 export interface IUser {
-  firstName: string;
-  lastName: string;
-  role: RoleType;
+  firstName?: string;
+  lastName?: string;
   authId: string;
 }
 
 export interface UserPublic {
   id: string;
-  firstName: string;
-  lastName: string;
-  role: RoleType;
+  firstName?: string;
+  lastName?: string;
 }
