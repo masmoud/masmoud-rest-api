@@ -2,7 +2,7 @@ import { logs } from "@/common/logger/pino-logger";
 import mongoose, { ConnectOptions } from "mongoose";
 import { config } from "./env.config";
 
-class Database {
+export class Database {
   private connected = false;
   private listenersAttached = false;
 

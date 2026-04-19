@@ -16,3 +16,13 @@ export const sendResponse = <T>(
 ) => {
   return res.status(statusCode).json(new ApiResponse(true, message, data));
 };
+
+export const sendError = (
+  res: Response,
+  statusCode = 500,
+  message = "An error occurred",
+) => {
+  return res.status(statusCode).json(new ApiResponse(false, message));
+};
+
+export type SendResponse = typeof sendResponse;

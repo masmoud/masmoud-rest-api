@@ -1,67 +1,64 @@
-import { IAuth } from "../auth.types";
-import {
-  AuthDocument,
-  AuthDocumentRepo,
-  AuthModel,
-  AuthModelType,
-} from "./auth.model";
+import { errors } from "@/common/utils";
+import { AuthRepository, IAuth } from "../auth.types";
+import { AuthDocument, AuthModelType } from "./auth.model";
 
-export class AuthRepository {
-  constructor(private readonly authModel: AuthModelType = AuthModel) {}
+/** Creates an AuthRepository bound to the given Mongoose model. */
+export const createAuthRepository = (model: AuthModelType): AuthRepository => ({
+  /** Creates a new auth record. Password hashing is handled by the model's pre-save hook. */
+  async register(data: Pick<IAuth, "email" | "password" | "role">) {
+    const auth = new model(data);
+    return (await auth.save()) as AuthDocument;
+  },
 
-  // Create a new auth record.
-  async register(
-    data: Pick<IAuth, "email" | "password" | "role">,
-  ): Promise<AuthDocument> {
-    const auth = new this.authModel(data);
-    return await auth.save();
-  }
+  /** Validates credentials and returns the auth record, or throws on mismatch. */
+  async login(email: string, password: string) {
+    const auth = await model.findOne({ email }).select("+password").exec();
+    if (!auth) throw errors.Unauthorized("Invalid credentials");
 
-  // Find auth record by email.
-  async findByEmail(email: string): Promise<AuthDocumentRepo> {
-    return this.authModel.findOne({ email }).select("+password").exec();
-  }
+    const isPasswordValid = await auth.comparePassword(password);
+    if (!isPasswordValid) throw errors.Unauthorized("Invalid credentials");
 
-  // Find auth record by Mongo id.
-  async findById(id: string): Promise<AuthDocumentRepo> {
-    return this.authModel.findById(id).exec();
-  }
+    return auth;
+  },
 
+  /** Finds by email. Selects the password field for credential verification. */
+  async findByEmail(email: string) {
+    return model.findOne({ email }).select("+password").exec();
+  },
+
+  /** Finds by ID. Used during token validation and middleware authentication. */
+  async findById(id: string) {
+    return model.findById(id).exec();
+  },
+
+  /** Deletes an auth record by ID. */
   async deleteById(id: string) {
-    return this.authModel.findByIdAndDelete(id).exec();
-  }
+    await model.findByIdAndDelete(id).exec();
+  },
 
-  // Store a hashed refresh token.
-  async addRefreshToken(userId: string, hashedToken: string): Promise<void> {
-    await this.authModel
-      .findByIdAndUpdate(userId, {
-        $push: { refreshTokens: hashedToken },
-      })
+  /** Appends a hashed refresh token. Only the hash is stored, never the raw token. */
+  async addRefreshToken(userId: string, hashedToken: string) {
+    await model
+      .findByIdAndUpdate(userId, { $push: { refreshTokens: hashedToken } })
       .exec();
-  }
+  },
 
-  // Find auth record by hashed refresh token.
-  async findByRefreshToken(hashedToken: string): Promise<AuthDocumentRepo> {
-    return this.authModel.findOne({ refreshTokens: hashedToken }).exec();
-  }
+  /** Finds an auth record by hashed refresh token. Used during the refresh flow. */
+  async findByRefreshToken(hashedToken: string) {
+    return model.findOne({ refreshTokens: hashedToken }).exec();
+  },
 
-  // Remove a hashed refresh token.
-  async removeRefreshToken(userId: string, hashedToken: string): Promise<void> {
-    await this.authModel
-      .findByIdAndUpdate(userId, {
-        $pull: { refreshTokens: hashedToken },
-      })
+  /** Removes a specific hashed refresh token. Used on logout or token rotation. */
+  async removeRefreshToken(userId: string, hashedToken: string) {
+    await model
+      .findByIdAndUpdate(userId, { $pull: { refreshTokens: hashedToken } })
       .exec();
-  }
+  },
 
-  // Clear all refresh tokens for an auth record.
-  async clearRefreshTokens(userId: string): Promise<void> {
-    await this.authModel
-      .findByIdAndUpdate(userId, {
-        $set: { refreshTokens: [] },
-      })
+  /** Clears all refresh tokens. Used for force-logout or on password change. */
+  async clearRefreshTokens(userId: string) {
+    await model
+      .findByIdAndUpdate(userId, { $set: { refreshTokens: [] } })
       .exec();
-  }
-}
-
-export const authRepository = new AuthRepository();
+  },
+});

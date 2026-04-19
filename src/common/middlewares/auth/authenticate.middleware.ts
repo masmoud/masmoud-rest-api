@@ -1,11 +1,11 @@
-import { authCookies, errors } from "@/common/utils";
-import { authService } from "@/modules/auth/v1/auth.service";
-import { toPublicUser } from "@/modules/user/user.utils";
-import { userRepository } from "@/modules/user/v1/user.repository";
+import { errors } from "@/common/utils";
+import { authRepo } from "@/context";
+import { tokenService } from "@/modules/auth/auth.token";
+import { toPublicAuth } from "@/modules/auth/auth.utils";
 
 import type { NextFunction, Request, Response } from "express";
 
-const extractTokenFromHeader = (req: Request): string | null => {
+const extractTokenFromRequest = (req: Request): string | null => {
   const cookieToken = req.cookies["accessToken"];
   const authHeader = req.headers.authorization;
 
@@ -17,42 +17,20 @@ const extractTokenFromHeader = (req: Request): string | null => {
 };
 
 export const authenticate = () => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, _res: Response, next: NextFunction) => {
     try {
-      // Resolve access token from header or cookie.
-      const token = extractTokenFromHeader(req);
+      const token = extractTokenFromRequest(req);
       if (!token) throw errors.Unauthorized("Missing access token");
 
-      let auth = null;
+      const payload = tokenService.verify.access(token);
 
-      try {
-        // Validate access token first.
-        auth = await authService.getAuthFromToken(token);
-      } catch {
-        // If access token is invalid, attempt refresh-token rotation.
-        const refreshToken = req.cookies["refreshToken"];
-        if (!refreshToken) throw errors.Unauthorized("Access token expired");
-
-        // Rotate tokens and update cookies.
-        const tokens = await authService.refresh(refreshToken);
-        authCookies.set(res, tokens.accessToken, tokens.refreshToken);
-
-        // Re-hydrate auth context from the fresh access token.
-        auth = await authService.getAuthFromToken(tokens.accessToken, "access");
-      }
+      const auth = await authRepo.findById(payload.sub);
       if (!auth) throw errors.Unauthorized("Invalid or expired token");
 
-      // Fetch associated user profile.
-      const user = await userRepository.findByAuthId(auth.id);
-      if (!user) throw errors.Unauthorized("User not found");
-
-      // Attach auth and user context to the request.
-      req.auth = auth;
-      req.user = toPublicUser(user);
-
+      req.auth = toPublicAuth(auth);
       next();
-    } catch (error) {
-      return next(errors.Unauthorized("Invalid or expired token"));
+    } catch {
+      next(errors.Unauthorized("Invalid or expired token"));
     }
   };
 };

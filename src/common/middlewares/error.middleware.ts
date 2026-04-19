@@ -15,13 +15,17 @@ export const errorHandler = (
   const { statusCode, message, code, details } = appError;
 
   logs.error.error({
+    // err: appError,
     requestId: req.headers["x-request-id"] || req.requestId,
     method: req.method,
     url: req.originalUrl,
     statusCode,
     message,
     code,
-    stack: config.server.nodeEnv === "development" ? appError.stack : undefined,
+    stack:
+      config.server.nodeEnv === "development" ?
+        appError.stack?.split("\n").map((line) => line.trim())
+      : undefined,
     details,
   });
 

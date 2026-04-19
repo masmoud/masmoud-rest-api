@@ -1,5 +1,6 @@
-import { Schema, model } from "mongoose";
+import { Model, Schema, model } from "mongoose";
 import { IUser } from "../user.types";
+import { HydratedDocument } from "mongoose";
 
 const userSchema = new Schema<IUser>(
   {
@@ -25,7 +26,8 @@ const userSchema = new Schema<IUser>(
   },
 );
 
+export type UserModelType = Model<IUser>;
 export const UserModel = model<IUser>("User", userSchema);
 
-export type UserDocument = ReturnType<(typeof UserModel)["hydrate"]>;
+export type UserDocument = HydratedDocument<IUser>;
 export type UserDocumentRepo = UserDocument | null;

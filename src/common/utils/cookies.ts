@@ -53,3 +53,5 @@ export const authCookies = Object.freeze({
   set: setAuthCookies,
   clear: clearAuthCookies,
 });
+
+export type AuthCookies = typeof authCookies;

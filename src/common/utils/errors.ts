@@ -38,6 +38,8 @@ const createErrors = {
     new AppError(msg, 401, "UNAUTHORIZED", details),
   Conflict: (msg = "Conflict", details?: unknown) =>
     new AppError(msg, 409, "CONFLICT", details),
+  InternalServerError: (msg = "Internal Server Error", details?: unknown) =>
+    new AppError(msg, 500, "INTERNAL_ERROR", details),
 
   // Map common Mongoose errors to API errors.
   handleMongooseError: (err: unknown) => {
@@ -61,8 +63,9 @@ const createErrors = {
 
     if (err instanceof AppError) return err;
 
-    return new AppError("Internal Server Error", 500);
+    return createErrors.InternalServerError();
   },
 };
 
 export const errors = Object.freeze(createErrors);
+export type Errors = typeof errors;

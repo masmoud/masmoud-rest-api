@@ -40,3 +40,6 @@ export const logs = Object.freeze({
   // Helper for creating dynamic child loggers.
   child: createChildLogger,
 });
+
+export type Logger = typeof logs;
+export type ChildLogger = ReturnType<typeof logs.child>;

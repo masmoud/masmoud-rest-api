@@ -149,3 +149,6 @@ export const config: Readonly<{
   cors: corsConfig,
   logger: winstonConfig,
 };
+
+export type Config = typeof config;
+export type Env = z.infer<typeof envSchema>;

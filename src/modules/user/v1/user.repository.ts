@@ -1,40 +1,44 @@
 import { errors } from "@/common/utils";
 import { IUser } from "../user.types";
-import { UserDocument, UserDocumentRepo, UserModel } from "./user.model";
+import { UserDocument, UserDocumentRepo, UserModelType } from "./user.model";
 
-export class UserRepository {
-  constructor(private readonly userModel = UserModel) {}
+export interface UserRepository {
+  findAll(): Promise<UserDocument[]>;
+  findByAuthId(authId: string): Promise<UserDocumentRepo>;
+  findById(id: string): Promise<UserDocumentRepo>;
+  create(data: Partial<IUser>): Promise<UserDocument>;
+  update(id: string, data: Partial<IUser>): Promise<UserDocumentRepo>;
+  delete(id: string): Promise<void>;
+}
 
-  findAll = async (): Promise<UserDocument[]> => {
-    return this.userModel.find();
-  };
+/** Factory function to create a UserRepository instance with a given Mongoose model. */
+export const createUserRepository = (model: UserModelType): UserRepository => ({
+  async findAll() {
+    return model.find();
+  },
 
-  findByAuthId = async (authId: string): Promise<UserDocumentRepo> => {
-    return this.userModel.findOne({ authId }).exec();
-  };
+  async findByAuthId(authId: string) {
+    return model.findOne({ authId }).exec();
+  },
 
-  findById = async (id: string): Promise<UserDocumentRepo> => {
-    return this.userModel.findById(id).exec();
-  };
+  async findById(id: string) {
+    return model.findById(id).exec();
+  },
 
-  create = async (data: Partial<IUser>): Promise<UserDocument> => {
+  async create(data: Partial<IUser>) {
     try {
-      return this.userModel.create(data);
+      const doc = await model.create(data);
+      return doc as UserDocument;
     } catch (error) {
       throw errors.handleMongooseError(error);
     }
-  };
+  },
 
-  update = async (
-    id: string,
-    data: Partial<IUser>,
-  ): Promise<UserDocumentRepo> => {
-    return this.userModel.findByIdAndUpdate(id, data, { new: true });
-  };
+  async update(id: string, data: Partial<IUser>) {
+    return model.findByIdAndUpdate(id, data, { new: true }).exec();
+  },
 
-  delete = async (id: string): Promise<void> => {
-    await this.userModel.findByIdAndDelete(id);
-  };
-}
-
-export const userRepository = new UserRepository();
+  async delete(id: string) {
+    await model.findByIdAndDelete(id).exec();
+  },
+});

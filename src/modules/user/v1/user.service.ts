@@ -1,39 +1,37 @@
 import { errors } from "@/common/utils";
 import { IUser } from "../user.types";
 import { UserDocument } from "./user.model";
-import { UserRepository, userRepository } from "./user.repository";
+import { UserRepository } from "./user.repository";
 
-export class UserService {
-  constructor(private readonly repo: UserRepository = userRepository) {}
-
-  async getProfile(userId: string): Promise<UserDocument> {
-    const user = await this.repo.findById(userId);
-    if (!user) throw errors.Unauthorized("User not authenticated");
-    return user;
-  }
-
-  async listUsers(): Promise<UserDocument[]> {
-    return this.repo.findAll();
-  }
-
-  async getUserById(userId: string): Promise<UserDocument> {
-    const user = await this.repo.findById(userId);
-    if (!user) throw errors.NotFound("User not found");
-    return user;
-  }
-
-  async updateUser(
-    userId: string,
-    data: Partial<IUser>,
-  ): Promise<UserDocument> {
-    const user = await this.repo.update(userId, data);
-    if (!user) throw errors.NotFound("User not found");
-    return user;
-  }
-
-  async deleteUser(userId: string): Promise<void> {
-    await this.repo.delete(userId);
-  }
+export interface UserService {
+  listUsers(): Promise<UserDocument[]>;
+  getUserById(userId: string): Promise<UserDocument>;
+  updateUser(userId: string, data: Partial<IUser>): Promise<UserDocument>;
+  deleteById(userId: string): Promise<void>;
 }
 
-export const userService = new UserService();
+/** Creates a UserService bound to the given repository. */
+export const createUserService = (repo: UserRepository): UserService => ({
+  async listUsers() {
+    return repo.findAll();
+  },
+
+  async getUserById(userId: string) {
+    const user = await repo.findById(userId);
+    if (!user) throw errors.NotFound("User not found");
+    return user;
+  },
+
+  async updateUser(userId: string, data: Partial<IUser>) {
+    const user = await repo.update(userId, data);
+    if (!user) throw errors.NotFound("User not found");
+    return user;
+  },
+
+  async deleteById(userId: string) {
+    const user = await repo.findById(userId);
+    if (!user) throw errors.NotFound("User not found");
+
+    await repo.delete(userId);
+  },
+});

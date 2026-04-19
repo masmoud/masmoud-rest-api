@@ -1,4 +1,4 @@
-import { hashToken } from "@/common/utils";
+import { errors } from "@/common/utils";
 import { config } from "@/config";
 import jwt, { SignOptions } from "jsonwebtoken";
 import {
@@ -7,8 +7,9 @@ import {
   RefreshTokenPayload,
 } from "./auth.types";
 
-const signToken = (
-  payload: AccessTokenPayload | RefreshTokenPayload,
+/** Signs a JWT with the given payload, secret, and expiry. */
+const signToken = <T extends object>(
+  payload: T,
   secret: string,
   expiresIn: JwtExpiry,
 ) => {
@@ -16,56 +17,55 @@ const signToken = (
   return jwt.sign(payload, secret, options);
 };
 
-const verifyToken = (
-  token: string,
-  secret: string,
-): AccessTokenPayload | RefreshTokenPayload => {
+/** Verifies a JWT and returns its decoded payload. Throws if invalid or expired. */
+const verifyToken = <T>(token: string, secret: string): T => {
   try {
-    return jwt.verify(token, secret) as
-      | AccessTokenPayload
-      | RefreshTokenPayload;
+    return jwt.verify(token, secret) as T;
   } catch (err) {
-    throw new Error("Invalid or expired token");
+    throw errors.Unauthorized("Invalid or expired token");
   }
 };
 
-const generateAccess = (payload: AccessTokenPayload) => {
-  return tokenService.sign.access(payload);
+/** Generates a signed access token from the given payload. */
+const generateAccessToken = (payload: AccessTokenPayload) => {
+  const accessToken = signToken(
+    payload,
+    config.jwt.access.secret,
+    config.jwt.access.expiresIn as JwtExpiry,
+  );
+  return { accessToken };
 };
 
-const generateRefresh = (authId: string) => {
+/**
+ * Generates a signed refresh token and its hash.
+ * The raw token is sent to the client; only the hash is stored in the database.
+ */
+const generateRefreshToken = (payload: RefreshTokenPayload) => {
   const refreshToken = signToken(
-    { sub: authId },
+    payload,
     config.jwt.refresh.secret,
     config.jwt.refresh.expiresIn as JwtExpiry,
   );
-  const hashedRefreshToken = hashToken(refreshToken);
-  return { refreshToken, hashedRefreshToken };
+  return { refreshToken };
 };
 
+/** Verifies the access token and returns its decoded payload. */
+const verifyAccessToken = (token: string) =>
+  verifyToken<AccessTokenPayload>(token, config.jwt.access.secret);
+
+/** Verifies the refresh token and returns its decoded payload. */
+const verifyRefreshToken = (token: string) =>
+  verifyToken<RefreshTokenPayload>(token, config.jwt.refresh.secret);
+
 export const tokenService = {
-  sign: {
-    access: (payload: AccessTokenPayload) =>
-      signToken(
-        payload,
-        config.jwt.access.secret,
-        config.jwt.access.expiresIn as JwtExpiry,
-      ),
-    refresh: (payload: RefreshTokenPayload) =>
-      signToken(
-        payload,
-        config.jwt.refresh.secret,
-        config.jwt.refresh.expiresIn as JwtExpiry,
-      ),
+  generate: {
+    access: generateAccessToken,
+    refresh: generateRefreshToken,
   },
   verify: {
-    access: (token: string) => verifyToken(token, config.jwt.access.secret),
-    refresh: (token: string) => verifyToken(token, config.jwt.refresh.secret),
-  },
-  generate: {
-    access: generateAccess,
-    refresh: generateRefresh,
+    access: verifyAccessToken,
+    refresh: verifyRefreshToken,
   },
 } as const;
 
-export type TokenServiceType = typeof tokenService;
+export type TokenService = typeof tokenService;

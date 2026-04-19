@@ -1,10 +1,21 @@
 import { ApiV1Detail } from "@/common/types";
+import { authRepo, userManagementSvc, userRepo } from "@/context";
 import { swaggerVersions } from "@/docs";
-import { authRoutesV1 } from "@/modules/auth/v1";
-import { userRoutesV1 } from "@/modules/user/v1";
+import { createAuthModule } from "@/modules/auth/v1/auth.module";
+import { createUserModule } from "@/modules/user/v1/user.module";
 import { Router } from "express";
 import swaggerRoutes from "./swagger/swagger.routes";
 import systemRoutes from "./system";
+
+const authModule = createAuthModule({
+  authRepository: authRepo,
+  userRepository: userRepo,
+});
+
+const userModule = createUserModule({
+  userRepository: userRepo,
+  userManagementService: userManagementSvc,
+});
 
 const router = Router();
 
@@ -22,8 +33,8 @@ const apiV1: ApiV1Detail = {
 };
 
 router.use("/system", systemRoutes);
-router.use("/auth", authRoutesV1);
-router.use("/users", userRoutesV1);
+router.use("/auth", authModule.router);
+router.use("/users", userModule.router);
 router.use("/docs", swaggerRoutes);
 
 router.get("/", (_req, res) => {

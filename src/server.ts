@@ -7,14 +7,27 @@ import { seedAdmins } from "./modules/user/seed-admins";
 // Track service start time for uptime reporting.
 const serviceStartTime = Date.now();
 
+// Register process-level error handlers before anything else so errors during
+// startup are also caught.
+process.on("uncaughtException", (err) => {
+  logs.server.error(`Uncaught Exception: ${err.message}`);
+  logs.server.error(err.stack ?? "");
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason: unknown) => {
+  logs.server.error(`Unhandled Rejection: ${reason}`);
+  process.exit(1);
+});
+
 const startServer = async () => {
   try {
-    // Connect to dependencies.
     await db.connect();
     await seedAdmins();
 
-    // Start HTTP server.
-    const server = appInstance.app.listen(config.server.port, () => {
+    const { app } = appInstance;
+
+    const server = app.listen(config.server.port, () => {
       const baseURL =
         config.server.nodeEnv === "production" ?
           config.server.baseUrl
@@ -29,17 +42,17 @@ const startServer = async () => {
       logs.server.info(`----------------------------------------`);
     });
 
-    // Handle process shutdown signals.
+    /** Stops the HTTP server, disconnects from the DB, then exits cleanly. */
     const shutdownHandler = async (signal: string) => {
-      logs.db.info(`Received ${signal}. Initiating graceful shutdown...`);
+      logs.server.info(`Received ${signal}. Initiating graceful shutdown...`);
 
       server.close(async (err) => {
         if (err) {
-          logs.db.error(`Error closing server: ${err.message}`);
+          logs.server.error(`Error closing server: ${err.message}`);
           process.exit(1);
         }
 
-        await db.shutdown(signal);
+        await db.disconnect();
 
         const uptimeSec = Math.floor((Date.now() - serviceStartTime) / 1000);
         logs.server.info(`Server stopped. Uptime: ${uptimeSec}s`);
@@ -49,23 +62,11 @@ const startServer = async () => {
 
     process.on("SIGINT", () => shutdownHandler("SIGINT"));
     process.on("SIGTERM", () => shutdownHandler("SIGTERM"));
-
-    // Handle unexpected process-level errors.
-    process.on("uncaughtException", (err) => {
-      logs.db.error(`Uncaught Exception: ${err.message}`);
-      logs.db.error(err.stack);
-      process.exit(1);
-    });
-
-    process.on("unhandledRejection", (reason: any) => {
-      logs.db.error(`Unhandled Rejection: ${reason}`);
-      process.exit(1);
-    });
-  } catch (error: any) {
-    logs.db.error(`Failed to start server: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    logs.server.error(`Failed to start server: ${message}`);
     process.exit(1);
   }
 };
 
-// Start the server.
 startServer();

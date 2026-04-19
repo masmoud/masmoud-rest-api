@@ -1,135 +1,161 @@
-import { RoleType } from "@/common/types";
-import { errors, hashToken } from "@/common/utils";
-import { tokenService } from "../auth.token";
+import { Role } from "@/common/types";
+import { errors } from "@/common/utils";
+import { UserRepository } from "@/modules/user/v1/user.repository";
+import { TokenService } from "../auth.token";
 import {
-  AccessTokenPayload,
-  AuthContext,
-  AuthResponse,
+  AuthRepository,
+  AuthService,
   RefreshTokenPayload,
 } from "../auth.types";
-import { toPublicAuth } from "../auth.utils";
-import { authRepository } from "./auth.repository";
+import { refreshTokenCrypto, toPublicAuth } from "../auth.utils";
 
-export class AuthService {
-  constructor(private readonly repo = authRepository) {}
-
-  async getAuthFromToken(
-    token: string,
-    type: "access" | "refresh" = "access",
-  ): Promise<AuthContext> {
-    let payload: AccessTokenPayload | RefreshTokenPayload;
-
-    try {
-      payload =
-        type === "access" ?
-          tokenService.verify.access(token)
-        : tokenService.verify.refresh(token);
-
-      const auth = await this.repo.findById(payload.sub);
-
-      if (!auth)
-        throw errors.Unauthorized("Invalid or expired authorization token");
-
-      return {
-        id: auth._id.toString(),
-        email: auth.email,
-        role: auth.role,
-      };
-    } catch (error) {
-      throw errors.Unauthorized("Invalid or expired token");
-    }
-  }
-
+export const createAuthService = (
+  repo: AuthRepository,
+  userRepo: UserRepository,
+  tokenSvc: TokenService,
+): AuthService => ({
   async register(
-    email: string,
-    password: string,
-    _role: RoleType,
-  ): Promise<AuthResponse> {
-    const existing = await this.repo.findByEmail(email);
+    email,
+    password,
+    role = Role.USER,
+    options = { issueTokens: true },
+  ) {
+    const existing = await repo.findByEmail(email);
     if (existing) throw errors.BadRequest("Email already registered");
 
-    const authDoc = await this.repo.register({
-      email,
-      password,
-      role: _role,
-    });
+    const authDoc = await repo.register({ email, password, role });
 
-    // Issue access and refresh tokens for the new account.
-    const accessToken = tokenService.generate.access({
+    const user = await userRepo.create({ authId: authDoc._id.toString() });
+
+    if (!user) {
+      await repo.deleteById(authDoc._id.toString());
+      throw errors.InternalServerError("Failed to create user profile");
+    }
+
+    if (options.issueTokens === false) {
+      return { type: "no_tokens", auth: toPublicAuth(authDoc) };
+    }
+
+    const { accessToken } = tokenSvc.generate.access({
       sub: authDoc._id.toString(),
       role: authDoc.role,
     });
-    const { refreshToken, hashedRefreshToken } = tokenService.generate.refresh(
-      authDoc._id.toString(),
-    );
 
-    await this.repo.addRefreshToken(authDoc._id.toString(), hashedRefreshToken);
+    const { refreshToken } = tokenSvc.generate.refresh({
+      sub: authDoc._id.toString(),
+    });
+
+    const hashedRefreshToken = await refreshTokenCrypto.hash(refreshToken);
+    await repo.addRefreshToken(authDoc._id.toString(), hashedRefreshToken);
 
     return {
-      user: toPublicAuth(authDoc),
+      type: "tokens",
+      auth: toPublicAuth(authDoc),
       accessToken,
       refreshToken,
     };
-  }
+  },
 
-  async login(email: string, password: string): Promise<AuthResponse> {
-    const authDoc = await this.repo.findByEmail(email);
+  async login(email, password) {
+    const authDoc = await repo.findByEmail(email);
     if (!authDoc) throw errors.Unauthorized("Invalid credentials");
 
     const isMatch = await authDoc.comparePassword(password);
     if (!isMatch) throw errors.Unauthorized("Invalid credentials");
 
-    const accessToken = tokenService.generate.access({
+    const { accessToken } = tokenSvc.generate.access({
       sub: authDoc._id.toString(),
       role: authDoc.role,
     });
 
-    const { refreshToken, hashedRefreshToken } = tokenService.generate.refresh(
-      authDoc._id.toString(),
-    );
+    const { refreshToken } = tokenSvc.generate.refresh({
+      sub: authDoc._id.toString(),
+    });
 
-    await this.repo.addRefreshToken(authDoc._id.toString(), hashedRefreshToken);
+    const hashedRefreshToken = await refreshTokenCrypto.hash(refreshToken);
+    await repo.addRefreshToken(authDoc._id.toString(), hashedRefreshToken);
 
-    return {
-      user: toPublicAuth(authDoc),
-      accessToken,
-      refreshToken,
-    };
-  }
+    return { auth: toPublicAuth(authDoc), accessToken, refreshToken };
+  },
 
-  async refresh(refreshToken: string) {
+  async refresh(refreshToken) {
     if (!refreshToken) throw errors.Unauthorized("No refresh token provided");
 
-    const payload = tokenService.verify.refresh(refreshToken);
-    const hashed = hashToken(refreshToken);
-    const authDoc = await this.repo.findById(payload.sub);
-
-    if (!authDoc) throw errors.Unauthorized("Invalid or expired refresh token");
-    if (!authDoc.refreshTokens.includes(hashed)) {
+    let payload: RefreshTokenPayload;
+    try {
+      payload = tokenSvc.verify.refresh(refreshToken);
+    } catch {
       throw errors.Unauthorized("Invalid or expired refresh token");
     }
 
-    // Rotate refresh token on each refresh request.
-    const { refreshToken: newToken, hashedRefreshToken } =
-      tokenService.generate.refresh(authDoc._id.toString());
+    const authDoc = await repo.findById(payload.sub);
+    if (!authDoc) throw errors.Unauthorized("Invalid or expired refresh token");
 
-    await this.repo.removeRefreshToken(authDoc._id.toString(), hashed);
-    await this.repo.addRefreshToken(authDoc._id.toString(), hashedRefreshToken);
+    let matchedHash: string | null = null;
+    for (const tokenHash of authDoc.refreshTokens) {
+      const isMatch = await refreshTokenCrypto.compare(refreshToken, tokenHash);
+      if (isMatch) {
+        matchedHash = tokenHash;
+        break;
+      }
+    }
 
-    const accessToken = tokenService.generate.access({
+    // If no match, the token may be compromised — clear all sessions.
+    if (!matchedHash) {
+      await repo.clearRefreshTokens(authDoc._id.toString());
+      throw errors.Unauthorized("Session compromised. Please log in again");
+    }
+
+    const { refreshToken: newToken } = tokenSvc.generate.refresh({
+      sub: authDoc._id.toString(),
+    });
+
+    const newHashedToken = await refreshTokenCrypto.hash(newToken);
+
+    // Rotate: atomically swap old hash for new one.
+    await repo.removeRefreshToken(authDoc._id.toString(), matchedHash);
+    await repo.addRefreshToken(authDoc._id.toString(), newHashedToken);
+
+    const { accessToken } = tokenSvc.generate.access({
       sub: authDoc._id.toString(),
       role: authDoc.role,
     });
 
-    return {
-      accessToken,
-      refreshToken: newToken,
-    };
-  }
+    return { accessToken, refreshToken: newToken };
+  },
 
-  async logout(authId: string, refreshToken: string): Promise<void> {
-    await this.repo.removeRefreshToken(authId, hashToken(refreshToken));
-  }
-}
+  async logout(authId, refreshToken?) {
+    const authDoc = await repo.findById(authId);
+    if (!authDoc) throw errors.NotFound("Auth record not found");
 
-export const authService = new AuthService();
+    if (refreshToken) {
+      const compareResults = await Promise.all(
+        authDoc.refreshTokens.map(async (tokenHash) => {
+          const isMatch = await refreshTokenCrypto.compare(
+            refreshToken,
+            tokenHash,
+          );
+          return isMatch ? tokenHash : null;
+        }),
+      );
+
+      const matchedHash = compareResults.find((hash) => hash !== null);
+
+      if (!matchedHash) {
+        await repo.clearRefreshTokens(authId);
+        return;
+      }
+
+      await repo.removeRefreshToken(authId, matchedHash);
+    } else {
+      await repo.clearRefreshTokens(authId);
+    }
+  },
+
+  async deleteById(authId) {
+    const authDoc = await repo.findById(authId);
+    if (!authDoc) throw errors.NotFound("Auth record not found");
+
+    await repo.deleteById(authId);
+  },
+});
