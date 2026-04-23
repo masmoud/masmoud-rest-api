@@ -15,6 +15,7 @@ Backend REST API built with Node.js, TypeScript, Express, and MongoDB.
 - Security middleware (Helmet, CORS, rate limiting)
 - MongoDB with Mongoose
 - Automatic admin seeding on startup
+- Pagination and filters on user listing
 - Swagger docs at `/api/v1/docs`
 
 ## Getting Started
@@ -67,50 +68,71 @@ npm start
 
 ## Scripts
 
-- `npm run server:dev`: run API server with `tsx`
-- `npm run build`: compile TypeScript and rewrite path aliases
-- `npm start`: run compiled app
-- `npm run test:unit`: run unit tests only
-- `npm run test:integration`: run no-DB integration test (`system.health.integration.spec.ts`)
-- `npm run test:all`: run unit + no-DB integration, then DB integration only if `TEST_MONGO_URI` is set
-
-## Testing Notes
-
-- `test:integration` is intentionally DB-free.
-- `test:all` runs `test:unit` then `test:integration`, and attempts DB-backed integration only if `TEST_MONGO_URI` is provided.
+| Command | Description |
+|---|---|
+| `npm run server:dev` | Run API server with `tsx` (hot reload) |
+| `npm run build` | Compile TypeScript and rewrite path aliases |
+| `npm start` | Run compiled app from `dist/` |
+| `npm run test:unit` | Run unit tests |
 
 ## API Endpoints
 
 ### Auth
 
-- `POST /api/v1/auth/register`: register public user account
-- `POST /api/v1/auth/admin/register`: register admin account (admin token required)
-- `POST /api/v1/auth/login`: login and set auth cookies
-- `POST /api/v1/auth/refresh`: rotate token using refresh cookie
-- `POST /api/v1/auth/logout`: logout (authenticated)
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| `POST` | `/api/v1/auth/register` | Register a public user account | — |
+| `POST` | `/api/v1/auth/admin/register` | Register an admin account | Admin |
+| `POST` | `/api/v1/auth/login` | Login and set auth cookies | — |
+| `POST` | `/api/v1/auth/refresh` | Rotate tokens using refresh cookie | — |
+| `POST` | `/api/v1/auth/logout` | Logout and clear tokens | User |
 
 ### Users
 
-- `GET /api/v1/users/profile`: get authenticated user profile
-- `PUT /api/v1/users/profile`: update authenticated user profile
-- `GET /api/v1/users`: list users (admin only)
-- `GET /api/v1/users/:id`: get user by ID (self or admin)
-- `PUT /api/v1/users/:id`: update user by ID (self or admin)
-- `DELETE /api/v1/users/:id`: delete user by ID (self or admin)
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| `GET` | `/api/v1/users/profile` | Get own profile | User |
+| `PUT` | `/api/v1/users/profile` | Update own profile (`firstName`, `lastName`, `email`) | User |
+| `GET` | `/api/v1/users` | List users with pagination and filters | Admin |
+| `GET` | `/api/v1/users/:id` | Get user by ID | Self / Admin |
+| `PUT` | `/api/v1/users/:id` | Update user by ID | Self / Admin |
+| `DELETE` | `/api/v1/users/:id` | Delete user by ID | Self / Admin |
+
+#### List users — query parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `page` | number | Page number (default: `1`) |
+| `limit` | number | Items per page (default: `10`, max: `50`) |
+| `firstName` | string | Filter by first name (case-insensitive) |
+| `lastName` | string | Filter by last name (case-insensitive) |
+| `email` | string | Filter by email (case-insensitive) |
+
+## User model
+
+Email is stored directly on the `User` document at registration time. When the email is updated via `PUT /users/profile` or `PUT /users/:id`, it is automatically synced to the linked `Auth` record.
+
+## Testing
+
+Unit tests live alongside source files as `*.spec.ts`.
+
+```bash
+npm run test:unit
+```
 
 ## Project Structure
 
 ```text
 src/
-	api/            API routers and version entrypoints
-	common/         shared middlewares, types, logger, utils
-	config/         env, DB, and runtime configuration
-	docs/           OpenAPI/Swagger definitions
-	modules/        domain modules (auth, user, role)
-	app.ts          Express app assembly
-	server.ts       server bootstrap
-tests/            integration setup and specs
-scripts/          helper scripts (tree, test-all)
+  api/            API routers and version entrypoints
+  application/    Cross-module services (e.g. UserManagementService)
+  common/         Shared middlewares, types, logger, utils
+  config/         Env, DB, and runtime configuration
+  docs/           OpenAPI/Swagger definitions
+  modules/        Domain modules (auth, user)
+  app.ts          Express app assembly
+  server.ts       Server bootstrap
+scripts/          Helper scripts
 ```
 
 ## License

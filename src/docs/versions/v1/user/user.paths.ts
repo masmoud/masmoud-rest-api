@@ -52,7 +52,40 @@ export const userPaths: OpenAPIV3.PathsObject = {
       tags: ["Users"],
       summary: "List all users",
       security: [{ bearerAuth: [] }],
-      description: "Returns all users. Admin role required.",
+      description:
+        "Returns a paginated list of users with optional filters. Admin role required.",
+      parameters: [
+        {
+          name: "page",
+          in: "query",
+          description: "Page number (default: 1)",
+          schema: { type: "integer", default: 1, minimum: 1 },
+        },
+        {
+          name: "limit",
+          in: "query",
+          description: "Items per page (default: 10, max: 50)",
+          schema: { type: "integer", default: 10, minimum: 1, maximum: 50 },
+        },
+        {
+          name: "firstName",
+          in: "query",
+          description: "Filter by first name (case-insensitive partial match)",
+          schema: { type: "string" },
+        },
+        {
+          name: "lastName",
+          in: "query",
+          description: "Filter by last name (case-insensitive partial match)",
+          schema: { type: "string" },
+        },
+        {
+          name: "email",
+          in: "query",
+          description: "Filter by email (case-insensitive partial match)",
+          schema: { type: "string" },
+        },
+      ],
       responses: {
         "200": {
           description: "Users list retrieved successfully",
