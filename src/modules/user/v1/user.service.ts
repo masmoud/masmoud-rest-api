@@ -3,8 +3,19 @@ import { IUser } from "../user.types";
 import { UserDocument } from "./user.model";
 import { UserRepository } from "./user.repository";
 
+export interface PaginatedUsers {
+  users: UserDocument[];
+  total: number;
+}
+
+export interface ListUsersOptions {
+  skip: number;
+  limit: number;
+  filters: Record<string, any>;
+}
+
 export interface UserService {
-  listUsers(): Promise<UserDocument[]>;
+  listUsers(options: ListUsersOptions): Promise<PaginatedUsers>;
   getUserById(userId: string): Promise<UserDocument>;
   updateUser(userId: string, data: Partial<IUser>): Promise<UserDocument>;
   deleteById(userId: string): Promise<void>;
@@ -12,8 +23,12 @@ export interface UserService {
 
 /** Creates a UserService bound to the given repository. */
 export const createUserService = (repo: UserRepository): UserService => ({
-  async listUsers() {
-    return repo.findAll();
+  async listUsers(options) {
+    const [users, total] = await Promise.all([
+      repo.findAll(options),
+      repo.count(options.filters),
+    ]);
+    return { users, total };
   },
 
   async getUserById(userId: string) {

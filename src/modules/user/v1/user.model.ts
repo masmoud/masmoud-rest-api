@@ -1,6 +1,5 @@
-import { Model, Schema, model } from "mongoose";
+import { HydratedDocument, Model, Schema, model } from "mongoose";
 import { IUser } from "../user.types";
-import { HydratedDocument } from "mongoose";
 
 const userSchema = new Schema<IUser>(
   {
@@ -13,6 +12,13 @@ const userSchema = new Schema<IUser>(
       type: String,
       trim: true,
       maxLength: [50, "Last name too long"],
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
     authId: {
       type: String,

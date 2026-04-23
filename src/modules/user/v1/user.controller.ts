@@ -5,6 +5,11 @@ import { errors, sendResponse } from "@/common/utils";
 import { Request, Response } from "express";
 import { toPublicUser } from "../user.utils";
 import { UserService } from "./user.service";
+import {
+  getPagination,
+  getPaginationMeta,
+  getUserFilters,
+} from "@/common/utils/pagination";
 
 export type UserController = ReturnType<typeof createUserController>;
 
@@ -46,7 +51,7 @@ export const createUserController = (
       const user = req.user;
       if (!user) throw errors.Unauthorized("User is not authenticated");
 
-      const updatedUser = await service.updateUser(user.id, req.body);
+      const updatedUser = await userManagementService.updateUser(user.id, req.body);
 
       log.info({ userId: user.id, message: "Profile updated successfully" });
       return sendResponse(
@@ -76,11 +81,20 @@ export const createUserController = (
     listUsers: async (req: Request, res: Response) => {
       const log = logs.child("USER_LIST", req.requestId);
 
-      const users = await service.listUsers();
+      const { page, limit, skip } = getPagination(req);
+      const filters = getUserFilters(req);
+
+      const { users, total } = await service.listUsers({ skip, limit, filters });
       const publicUsers = users.map(toPublicUser);
+      const pagination = getPaginationMeta(total, page, limit);
 
       log.info({ count: publicUsers.length, message: "Users fetched" });
-      return sendResponse(res, 200, publicUsers, "Users fetched");
+      return sendResponse(
+        res,
+        200,
+        { users: publicUsers, pagination },
+        "Users fetched",
+      );
     },
 
     /** Updates a user by ID; enforces self-or-admin access. */
@@ -92,7 +106,7 @@ export const createUserController = (
 
       ensureSelfOrAdmin(req, userId);
 
-      const updatedUser = await service.updateUser(userId, req.body);
+      const updatedUser = await userManagementService.updateUser(userId, req.body);
 
       log.info({ userId, message: "User updated successfully" });
       return sendResponse(

@@ -2,8 +2,15 @@ import { errors } from "@/common/utils";
 import { IUser } from "../user.types";
 import { UserDocument, UserDocumentRepo, UserModelType } from "./user.model";
 
+export interface FindAllOptions {
+  skip: number;
+  limit: number;
+  filters: Record<string, any>;
+}
+
 export interface UserRepository {
-  findAll(): Promise<UserDocument[]>;
+  findAll(options: FindAllOptions): Promise<UserDocument[]>;
+  count(filters: Record<string, any>): Promise<number>;
   findByAuthId(authId: string): Promise<UserDocumentRepo>;
   findById(id: string): Promise<UserDocumentRepo>;
   create(data: Partial<IUser>): Promise<UserDocument>;
@@ -13,8 +20,12 @@ export interface UserRepository {
 
 /** Factory function to create a UserRepository instance with a given Mongoose model. */
 export const createUserRepository = (model: UserModelType): UserRepository => ({
-  async findAll() {
-    return model.find();
+  async findAll({ skip, limit, filters }) {
+    return model.find(filters).skip(skip).limit(limit).exec();
+  },
+
+  async count(filters) {
+    return model.countDocuments(filters).exec();
   },
 
   async findByAuthId(authId: string) {

@@ -25,7 +25,10 @@ export const createAuthService = (
 
     const authDoc = await repo.register({ email, password, role });
 
-    const user = await userRepo.create({ authId: authDoc._id.toString() });
+    const user = await userRepo.create({
+      authId: authDoc._id.toString(),
+      email,
+    });
 
     if (!user) {
       await repo.deleteById(authDoc._id.toString());

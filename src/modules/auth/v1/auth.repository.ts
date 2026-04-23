@@ -61,4 +61,9 @@ export const createAuthRepository = (model: AuthModelType): AuthRepository => ({
       .findByIdAndUpdate(userId, { $set: { refreshTokens: [] } })
       .exec();
   },
+
+  /** Updates the email address on an auth record. */
+  async updateEmail(authId: string, email: string) {
+    await model.findByIdAndUpdate(authId, { email }).exec();
+  },
 });

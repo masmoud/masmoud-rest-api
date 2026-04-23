@@ -7,5 +7,6 @@ export function toPublicUser(user: UserDocument): UserPublic {
     id: user._id.toString(),
     firstName: user.firstName,
     lastName: user.lastName,
+    email: user.email,
   };
 }

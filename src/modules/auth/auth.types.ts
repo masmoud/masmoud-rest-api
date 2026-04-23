@@ -31,6 +31,7 @@ export interface AuthRepository {
   findByRefreshToken(hashedToken: string): Promise<AuthDocumentRepo>;
   removeRefreshToken(userId: string, hashedToken: string): Promise<void>;
   clearRefreshTokens(userId: string): Promise<void>;
+  updateEmail(authId: string, email: string): Promise<void>;
 }
 
 export interface AuthPublic {

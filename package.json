@@ -7,9 +7,7 @@
     "build": "tsc && tsc-alias",
     "start": "node dist/server.js",
     "server:dev": "tsx src/server.ts",
-    "test:all": "node scripts/test-all.js",
-    "test:unit": "jest --selectProjects unit --verbose",
-    "test:integration": "cross-env SKIP_INTEGRATION_DB=true jest --selectProjects integration --runTestsByPath tests/system.health.integration.spec.ts --verbose"
+    "test:unit": "jest --selectProjects unit --verbose --detectOpenHandles"
   },
   "repository": {
     "type": "git",
@@ -66,5 +64,11 @@
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
+  },
+  "config": {
+    "mongodbMemoryServer": {
+      "version": "4.4.29",
+      "distro": "ubuntu-x64-20.04"
+    }
   }
 }

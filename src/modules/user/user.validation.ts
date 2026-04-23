@@ -7,12 +7,14 @@ export const UserSchema = z.object({
   id: z.string(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+  email: z.string().email().optional(),
 });
 
 export const UpdateUserSchema = z
   .object({
     firstName: optionalNameField("First name"),
     lastName: optionalNameField("Last name"),
+    email: z.string().trim().email("Invalid email address").optional(),
   })
   .strict();
 
